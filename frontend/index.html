@@ -13,7 +13,7 @@
                 <div class="logo-icon">🍎</div>
                 <span class="logo-text">FoodScan</span>
             </div>
-            <button class="menu-btn">
+            <button class="menu-btn" id="menu-btn">
                 <div class="menu-icon">
                     <span></span>
                     <span></span>
@@ -22,154 +22,368 @@
         </header>
 
         <main class="main-content">
-            <div class="upload-card" id="upload-card">
-                <input type="file" id="file-input" accept="image/*" capture="environment">
-                <div class="scan-icon">
-                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="10" y="10" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
-                        <rect x="50" y="10" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
-                        <rect x="10" y="50" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
-                        <rect x="50" y="50" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
-                    </svg>
-                    <div class="scan-line"></div>
+            <!-- Main Page -->
+            <div id="main-page">
+                <div class="upload-card" id="upload-card">
+                    <input type="file" id="file-input" accept="image/*" capture="environment">
+                    <div class="scan-icon">
+                        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="10" y="10" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
+                            <rect x="50" y="10" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
+                            <rect x="10" y="50" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
+                            <rect x="50" y="50" width="20" height="20" stroke="#ea580c" stroke-width="3"/>
+                        </svg>
+                        <div class="scan-line"></div>
+                    </div>
+                    <h2 class="upload-title">Сканировать еду</h2>
+                    <p class="upload-subtitle">Сделайте фото или загрузите изображение</p>
                 </div>
-                <h2 class="upload-title">Сканировать еду</h2>
-                <p class="upload-subtitle">Сделайте фото или загрузите изображение</p>
-            </div>
 
-            <div class="photo-section" id="photo-section">
-                <div class="photo-container">
-                    <img id="photo-preview" class="photo-preview" alt="Фото блюда">
-                    <div class="photo-actions">
-                        <button class="photo-action-btn" id="retake-btn">
-                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                                <path d="M1 1L17 17M17 1L1 17" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+                <div class="photo-section" id="photo-section">
+                    <div class="photo-container">
+                        <img id="photo-preview" class="photo-preview" alt="Фото блюда">
+                        <div class="photo-actions">
+                            <button class="photo-action-btn" id="retake-btn">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <path d="M1 1L17 17M17 1L1 17" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analyzing" id="analyzing">
+                    <div class="dots-loader">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <p style="color: var(--text-muted);">Анализируем состав...</p>
+                </div>
+
+                <div class="result-card" id="result-card">
+                    <div class="result-header">
+                        <div class="result-info">
+                            <h3 id="food-name">-</h3>
+                            <p id="food-portion">-</p>
+                        </div>
+                        <span class="confidence-badge" id="confidence">95%</span>
+                    </div>
+                </div>
+
+                <div class="nutrition-stats" id="nutrition-stats" style="display: none;">
+                    <div class="stat-card">
+                        <span class="stat-value"><span id="calories">0</span></span>
+                        <span class="stat-label">ккал</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value"><span id="protein">0</span><span class="stat-unit">г</span></span>
+                        <span class="stat-label">белки</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value"><span id="fat">0</span><span class="stat-unit">г</span></span>
+                        <span class="stat-label">жиры</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value"><span id="carbs">0</span><span class="stat-unit">г</span></span>
+                        <span class="stat-label">углеводы</span>
+                    </div>
+                </div>
+
+                <div class="meal-time" id="meal-time" style="display: none;">
+                    <button class="meal-pill active" data-meal="breakfast">Завтрак</button>
+                    <button class="meal-pill" data-meal="lunch">Обед</button>
+                    <button class="meal-pill" data-meal="dinner">Ужин</button>
+                    <button class="meal-pill" data-meal="snack">Перекус</button>
+                </div>
+
+                <div class="save-section" id="save-section">
+                    <button class="save-btn" id="save-btn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 2L10 18M2 10L18 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        Сохранить в дневник
+                    </button>
+                </div>
+
+                <!-- Daily Stats -->
+                <div class="daily-stats">
+                    <div class="stats-header">
+                        <h3>Сегодня</h3>
+                        <span class="stats-date" id="today-date">28 июня</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="daily-stat">
+                            <div class="stat-progress">
+                                <svg viewBox="0 0 36 36" class="circular-chart">
+                                    <path class="circle-bg"
+                                        stroke="#fed7aa"
+                                        stroke-width="3"
+                                        fill="none"
+                                        d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                    <path class="circle"
+                                        stroke="#ea580c"
+                                        stroke-width="3"
+                                        stroke-dasharray="75, 100"
+                                        stroke-linecap="round"
+                                        fill="none"
+                                        d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                </svg>
+                                <div class="stat-center">
+                                    <span class="stat-current" id="daily-calories">0</span>
+                                    <span class="stat-target">/2200</span>
+                                </div>
+                            </div>
+                            <span class="stat-name">Калории</span>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="stat-simple">
+                                <div class="stat-value-large" style="color: #16a34a;" id="daily-protein">0г</div>
+                                <div class="stat-subtitle">/120г</div>
+                            </div>
+                            <span class="stat-name">Белки</span>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="stat-simple">
+                                <div class="stat-value-large" style="color: #2563eb;" id="daily-fat">0г</div>
+                                <div class="stat-subtitle">/80г</div>
+                            </div>
+                            <span class="stat-name">Жиры</span>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="stat-simple">
+                                <div class="stat-value-large" style="color: #7c3aed;" id="daily-carbs">0г</div>
+                                <div class="stat-subtitle">/260г</div>
+                            </div>
+                            <span class="stat-name">Углеводы</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Food List -->
+                <div class="food-list" id="food-list">
+                    <h3 class="list-title">Приёмы пищи</h3>
+                    <div id="meals-container">
+                        <!-- Meals will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Side Menu -->
+        <div class="menu-overlay" id="menu-overlay"></div>
+        <div class="side-menu" id="side-menu">
+            <div class="menu-header">
+                <h3 class="menu-title">Меню</h3>
+                <button class="modal-close" id="menu-close">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M1 1L17 17M17 1L1 17" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="menu-items">
+                <a href="#" class="menu-item" id="history-link">
+                    <div class="menu-item-icon">📊</div>
+                    <span>История</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <div class="menu-item-icon">🎯</div>
+                    <span>Цели</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <div class="menu-item-icon">👤</div>
+                    <span>Профиль</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <div class="menu-item-icon">⚙️</div>
+                    <span>Настройки</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- History Page -->
+        <div class="history-page" id="history-page">
+            <div class="history-header">
+                <button class="back-btn" id="history-back">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M12 4L6 10L12 16" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2 style="font-size: 20px; font-weight: 700;">История питания</h2>
+            </div>
+            
+            <div class="history-content">
+                <!-- Calendar -->
+                <div class="calendar-nav">
+                    <h3 class="month-year">Июнь 2025</h3>
+                    <div class="calendar-nav-btns">
+                        <button class="nav-btn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M10 12L6 8L10 4" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <button class="nav-btn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M6 12L10 8L6 4" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div class="analyzing" id="analyzing">
-                <div class="dots-loader">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
+                <!-- Dynamic Calendar Container -->
+                <div id="calendar-container">
+                    <!-- Calendar will be generated by JavaScript -->
                 </div>
-                <p style="color: var(--text-muted);">Анализируем состав...</p>
-            </div>
 
-            <div class="result-card" id="result-card">
-                <div class="result-header">
-                    <div class="result-info">
-                        <h3 id="food-name">-</h3>
-                        <p id="food-portion">-</p>
+                <!-- Selected Date Info -->
+                <div class="selected-date-info">
+                    <h3 id="selected-date">Сегодня</h3>
+                    
+                    <!-- Day Stats -->
+                    <div id="day-stats" class="day-stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">Ккал</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0.0</div>
+                            <div class="stat-label">Белки</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0.0</div>
+                            <div class="stat-label">Жиры</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0.0</div>
+                            <div class="stat-label">Углеводы</div>
+                        </div>
                     </div>
-                    <span class="confidence-badge" id="confidence">95%</span>
+                    
+                    <!-- Day Meals -->
+                    <div id="day-meals" class="day-meals">
+                        <div class="no-meals">Нет записей за этот день</div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="nutrition-stats" id="nutrition-stats" style="display: none;">
-                <div class="stat-card">
-                    <span class="stat-value"><span id="calories">0</span></span>
-                    <span class="stat-label">ккал</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value"><span id="protein">0</span><span class="stat-unit">г</span></span>
-                    <span class="stat-label">белки</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value"><span id="fat">0</span><span class="stat-unit">г</span></span>
-                    <span class="stat-label">жиры</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value"><span id="carbs">0</span><span class="stat-unit">г</span></span>
-                    <span class="stat-label">углеводы</span>
-                </div>
-            </div>
-
-            <div class="meal-time" id="meal-time" style="display: none;">
-                <button class="meal-pill active" data-meal="breakfast">Завтрак</button>
-                <button class="meal-pill" data-meal="lunch">Обед</button>
-                <button class="meal-pill" data-meal="dinner">Ужин</button>
-                <button class="meal-pill" data-meal="snack">Перекус</button>
-            </div>
-
-            <div class="save-section" id="save-section">
-                <button class="save-btn" id="save-btn">
+        <!-- Profile Page -->
+        <div class="profile-page" id="profile-page" style="display: none;">
+            <div class="profile-header">
+                <button class="back-btn" id="profile-back">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M10 2L10 18M2 10L18 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M12 4L6 10L12 16" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Сохранить в дневник
                 </button>
+                <h2 style="font-size: 20px; font-weight: 700;">Профиль</h2>
             </div>
+            
+            <div class="profile-content">
+                <!-- Profile Avatar Section -->
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar">
+                        <div class="avatar-icon">👤</div>
+                    </div>
+                    <h3 class="profile-name" id="profile-name">Пользователь</h3>
+                    <p class="profile-subtitle">Управление профилем и целями</p>
+                </div>
 
-            <!-- Daily Stats -->
-            <div class="daily-stats">
-                <div class="stats-header">
-                    <h3>Сегодня</h3>
-                    <span class="stats-date" id="today-date">28 июня</span>
-                </div>
-                <div class="stats-grid">
-                    <div class="daily-stat">
-                        <div class="stat-progress">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg"
-                                    stroke="#fed7aa"
-                                    stroke-width="3"
-                                    fill="none"
-                                    d="M18 2.0845
-                                    a 15.9155 15.9155 0 0 1 0 31.831
-                                    a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                                <path class="circle"
-                                    stroke="#ea580c"
-                                    stroke-width="3"
-                                    stroke-dasharray="75, 100"
-                                    stroke-linecap="round"
-                                    fill="none"
-                                    d="M18 2.0845
-                                    a 15.9155 15.9155 0 0 1 0 31.831
-                                    a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                            </svg>
-                            <div class="stat-center">
-                                <span class="stat-current" id="daily-calories">0</span>
-                                <span class="stat-target">/2200</span>
-                            </div>
+                <!-- Personal Info Section -->
+                <div class="profile-section">
+                    <h3 class="section-title">Личная информация</h3>
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label class="form-label">Имя</label>
+                            <input type="text" id="profile-name-input" value="Пользователь" class="profile-input">
                         </div>
-                        <span class="stat-name">Калории</span>
-                    </div>
-                    <div class="daily-stat">
-                        <div class="stat-simple">
-                            <div class="stat-value-large" style="color: #16a34a;" id="daily-protein">0г</div>
-                            <div class="stat-subtitle">/120г</div>
+                        <div class="form-group">
+                            <label class="form-label">Возраст</label>
+                            <input type="number" id="profile-age-input" value="25" class="profile-input">
                         </div>
-                        <span class="stat-name">Белки</span>
-                    </div>
-                    <div class="daily-stat">
-                        <div class="stat-simple">
-                            <div class="stat-value-large" style="color: #2563eb;" id="daily-fat">0г</div>
-                            <div class="stat-subtitle">/80г</div>
+                        <div class="form-group">
+                            <label class="form-label">Рост (см)</label>
+                            <input type="number" id="profile-height-input" value="170" class="profile-input">
                         </div>
-                        <span class="stat-name">Жиры</span>
-                    </div>
-                    <div class="daily-stat">
-                        <div class="stat-simple">
-                            <div class="stat-value-large" style="color: #7c3aed;" id="daily-carbs">0г</div>
-                            <div class="stat-subtitle">/260г</div>
+                        <div class="form-group">
+                            <label class="form-label">Вес (кг)</label>
+                            <input type="number" id="profile-weight-input" value="70" class="profile-input">
                         </div>
-                        <span class="stat-name">Углеводы</span>
                     </div>
                 </div>
-            </div>
+                
+                <!-- Goals Section -->
+                <div class="profile-section">
+                    <h3 class="section-title">Цели питания</h3>
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label class="form-label">Целевые калории</label>
+                            <input type="number" id="profile-calories-input" value="2200" class="profile-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Белки (г)</label>
+                            <input type="number" id="profile-protein-input" value="110" class="profile-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Жиры (г)</label>
+                            <input type="number" id="profile-fats-input" value="75" class="profile-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Углеводы (г)</label>
+                            <input type="number" id="profile-carbs-input" value="275" class="profile-input">
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Food List -->
-            <div class="food-list" id="food-list">
-                <h3 class="list-title">Приёмы пищи</h3>
-                <div id="meals-container">
-                    <!-- Meals will be populated by JavaScript -->
+                <!-- Activity Level Section -->
+                <div class="profile-section">
+                    <h3 class="section-title">Уровень активности</h3>
+                    <div class="activity-options">
+                        <label class="activity-option">
+                            <input type="radio" name="activity" value="sedentary" checked>
+                            <span class="activity-text">
+                                <span class="activity-title">Сидячий образ жизни</span>
+                                <span class="activity-desc">Минимальная физическая активность</span>
+                            </span>
+                        </label>
+                        <label class="activity-option">
+                            <input type="radio" name="activity" value="light">
+                            <span class="activity-text">
+                                <span class="activity-title">Легкая активность</span>
+                                <span class="activity-desc">1-3 тренировки в неделю</span>
+                            </span>
+                        </label>
+                        <label class="activity-option">
+                            <input type="radio" name="activity" value="moderate">
+                            <span class="activity-text">
+                                <span class="activity-title">Умеренная активность</span>
+                                <span class="activity-desc">3-5 тренировок в неделю</span>
+                            </span>
+                        </label>
+                        <label class="activity-option">
+                            <input type="radio" name="activity" value="high">
+                            <span class="activity-text">
+                                <span class="activity-title">Высокая активность</span>
+                                <span class="activity-desc">6-7 тренировок в неделю</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Save Button -->
+                <div class="profile-actions">
+                    <button class="save-btn" id="profile-save-btn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M16.667 5L7.5 14.167L3.333 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Сохранить изменения
+                    </button>
                 </div>
             </div>
-        </main>
+        </div>
 
         <!-- Food Detail Modal -->
         <div class="modal-overlay" id="food-modal">

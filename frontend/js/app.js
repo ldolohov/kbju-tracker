@@ -30,6 +30,15 @@ let currentStats = JSON.parse(localStorage.getItem('kbju_stats')) || {
     carbs: 0
 };
 
+// Sidebar elements
+let sidebar, sidebarToggle, sidebarOverlay;
+
+// Page elements
+let mainPage, historyPage, profilePage;
+
+// Текущая страница
+let currentPage = 'main';
+
 // Миграция старых блюд без поля date
 const today = new Date().toDateString();
 mealHistory.forEach(meal => {
@@ -58,8 +67,31 @@ const modalClose = document.getElementById('modal-close');
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM загружен');
+    
+    // Инициализируем переменные
+    sidebar = document.getElementById('side-menu');
+    sidebarToggle = document.getElementById('menu-btn');
+    sidebarOverlay = document.getElementById('menu-overlay');
+    mainPage = document.getElementById('main-page');
+    historyPage = document.getElementById('history-page');
+    profilePage = document.getElementById('profile-page');
+    
+    console.log('Элементы sidebar:', {
+        sidebar: sidebar,
+        sidebarToggle: sidebarToggle,
+        sidebarOverlay: sidebarOverlay
+    });
+    console.log('Элементы страниц:', {
+        mainPage: mainPage,
+        historyPage: historyPage,
+        profilePage: profilePage
+    });
+    
     initializeApp();
     initializeModal();
+    initializeSidebar();
+    initializeNavigation();
     loadProfile();
     updateDailyStats();
     updateFoodList();
@@ -67,6 +99,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
+    console.log('Инициализация приложения...');
+    
+    // Проверяем существование элементов
+    if (!uploadCard) {
+        console.error('uploadCard не найден');
+        return;
+    }
+    if (!fileInput) {
+        console.error('fileInput не найден');
+        return;
+    }
+    if (!retakeBtn) {
+        console.error('retakeBtn не найден');
+        return;
+    }
+    if (!saveBtn) {
+        console.error('saveBtn не найден');
+        return;
+    }
+    
     // Meal pills
     const mealPills = document.querySelectorAll('.meal-pill');
     mealPills.forEach(pill => {
@@ -114,14 +166,30 @@ function initializeApp() {
         this.style.background = '#16a34a';
         
         // Сохраняем в историю
-        const selectedMeal = document.querySelector('.meal-pill.active').dataset.meal;
+        const selectedMeal = document.querySelector('.meal-pill.active');
+        if (!selectedMeal) {
+            console.error('Не выбран тип приема пищи');
+            return;
+        }
+        
+        const foodName = document.getElementById('food-name');
+        const calories = document.getElementById('calories');
+        const protein = document.getElementById('protein');
+        const fat = document.getElementById('fat');
+        const carbs = document.getElementById('carbs');
+        
+        if (!foodName || !calories || !protein || !fat || !carbs) {
+            console.error('Не найдены элементы с данными о еде');
+            return;
+        }
+        
         const foodData = {
-            name: document.getElementById('food-name').textContent,
-            calories: parseInt(document.getElementById('calories').textContent),
-            protein: parseFloat(document.getElementById('protein').textContent),
-            fats: parseFloat(document.getElementById('fat').textContent),
-            carbs: parseFloat(document.getElementById('carbs').textContent),
-            type: selectedMeal,
+            name: foodName.textContent,
+            calories: parseInt(calories.textContent),
+            protein: parseFloat(protein.textContent),
+            fats: parseFloat(fat.textContent),
+            carbs: parseFloat(carbs.textContent),
+            type: selectedMeal.dataset.meal,
             time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
             date: new Date().toDateString(),
             id: Date.now()
@@ -139,24 +207,492 @@ function initializeApp() {
 
 function initializeModal() {
     // Close modal
-    modalClose.addEventListener('click', closeModal);
-    foodModal.addEventListener('click', (e) => {
-        if (e.target === foodModal) closeModal();
-    });
+    if (modalClose) {
+        modalClose.addEventListener('click', closeModal);
+    }
+    
+    if (foodModal) {
+        foodModal.addEventListener('click', (e) => {
+            if (e.target === foodModal) closeModal();
+        });
+    }
     
     // Modal action buttons
-    document.querySelector('.modal-action-btn.delete').addEventListener('click', () => {
-        const currentFoodId = foodModal.dataset.foodId;
-        if (currentFoodId) {
-            deleteMeal(parseInt(currentFoodId));
+    const deleteBtn = document.querySelector('.modal-action-btn.delete');
+    const editBtn = document.querySelector('.modal-action-btn.edit');
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+            const currentFoodId = foodModal.dataset.foodId;
+            if (currentFoodId) {
+                deleteMeal(parseInt(currentFoodId));
+                closeModal();
+            }
+        });
+    }
+
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            alert('Редактирование порции - функция в разработке');
             closeModal();
+        });
+    }
+}
+
+function initializeSidebar() {
+    console.log('Инициализация sidebar...');
+    console.log('sidebarToggle:', sidebarToggle);
+    console.log('sidebar:', sidebar);
+    console.log('sidebarOverlay:', sidebarOverlay);
+    
+    if (!sidebarToggle || !sidebar || !sidebarOverlay) {
+        console.log('Sidebar elements not found:', { sidebarToggle, sidebar, sidebarOverlay });
+        return;
+    }
+    
+    console.log('Все элементы sidebar найдены, добавляем обработчики...');
+    
+    // Toggle sidebar
+    sidebarToggle.addEventListener('click', () => {
+        console.log('Menu button clicked');
+        console.log('Sidebar before toggle:', sidebar.className);
+        console.log('Overlay before toggle:', sidebarOverlay.className);
+        
+        sidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+        
+        console.log('Sidebar after toggle:', sidebar.className);
+        console.log('Overlay after toggle:', sidebarOverlay.className);
+        console.log('Sidebar computed style:', window.getComputedStyle(sidebar).right);
+    });
+
+    // Close sidebar on overlay click
+    sidebarOverlay.addEventListener('click', () => {
+        console.log('Overlay clicked, closing sidebar');
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+    });
+
+    // Close sidebar on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
         }
     });
 
-    document.querySelector('.modal-action-btn.edit').addEventListener('click', () => {
-        alert('Редактирование порции - функция в разработке');
-        closeModal();
+    // Close sidebar on menu close button
+    const menuClose = document.getElementById('menu-close');
+    if (menuClose) {
+        menuClose.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+    }
+    
+    console.log('Sidebar инициализирован');
+}
+
+function initializeNavigation() {
+    // Navigation menu items - используем существующие элементы меню
+    const historyLink = document.getElementById('history-link');
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    if (historyLink) {
+        historyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateToPage('history');
+            
+            // Close sidebar after navigation
+            if (sidebar) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            }
+        });
+    }
+
+    // Добавляем обработчики для других пунктов меню
+    menuItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Определяем страницу по содержимому или ID
+            const text = item.textContent.toLowerCase();
+            let page = 'main';
+            
+            if (text.includes('история') || item.id === 'history-link') {
+                page = 'history';
+            } else if (text.includes('профиль') || text.includes('👤')) {
+                page = 'profile';
+            } else if (text.includes('цели') || text.includes('🎯')) {
+                page = 'goals';
+            } else if (text.includes('настройки') || text.includes('⚙️')) {
+                page = 'settings';
+            }
+            
+            if (page !== 'main') {
+                navigateToPage(page);
+                
+                // Close sidebar after navigation
+                if (sidebar) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                }
+            }
+        });
     });
+
+    // Back buttons
+    const historyBack = document.getElementById('history-back');
+    const profileBack = document.getElementById('profile-back');
+    
+    if (historyBack) {
+        historyBack.addEventListener('click', () => {
+            navigateToPage('main');
+        });
+    }
+    
+    if (profileBack) {
+        profileBack.addEventListener('click', () => {
+            navigateToPage('main');
+        });
+    }
+}
+
+function navigateToPage(page) {
+    console.log('Navigating to page:', page);
+    console.log('Elements:', { mainPage, historyPage, profilePage });
+    
+    if (!mainPage || !historyPage || !profilePage) {
+        console.log('Some page elements not found');
+        return;
+    }
+    
+    // Hide all pages
+    mainPage.style.display = 'none';
+    historyPage.style.display = 'none';
+    profilePage.style.display = 'none';
+
+    // Show selected page
+    switch(page) {
+        case 'main':
+            mainPage.style.display = 'block';
+            currentPage = 'main';
+            updateDailyStats();
+            updateFoodList();
+            break;
+        case 'history':
+            historyPage.style.display = 'block';
+            historyPage.classList.add('active');
+            currentPage = 'history';
+            initializeHistoryPage();
+            break;
+        case 'profile':
+            profilePage.style.display = 'block';
+            profilePage.classList.add('active');
+            currentPage = 'profile';
+            initializeProfilePage();
+            break;
+    }
+
+    // Update active nav item
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const activeNavItem = document.querySelector(`[data-page="${page}"]`);
+    if (activeNavItem) {
+        activeNavItem.classList.add('active');
+    }
+}
+
+function initializeHistoryPage() {
+    const calendarContainer = document.getElementById('calendar-container');
+    const selectedDateDisplay = document.getElementById('selected-date');
+    const dayStats = document.getElementById('day-stats');
+    const dayMeals = document.getElementById('day-meals');
+
+    if (!calendarContainer) return;
+
+    // Initialize calendar
+    renderCalendar(calendarContainer);
+    
+    // Set today as default selected date
+    const today = new Date();
+    selectDate(today, selectedDateDisplay, dayStats, dayMeals);
+}
+
+function renderCalendar(container) {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDay = firstDay.getDay();
+
+    // Month names
+    const monthNames = [
+        'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ];
+
+    // Create calendar HTML
+    let calendarHTML = `
+        <div class="calendar-header">
+            <h3>${monthNames[currentMonth]} ${currentYear}</h3>
+        </div>
+        <div class="calendar-grid">
+            <div class="calendar-day-header">Пн</div>
+            <div class="calendar-day-header">Вт</div>
+            <div class="calendar-day-header">Ср</div>
+            <div class="calendar-day-header">Чт</div>
+            <div class="calendar-day-header">Пт</div>
+            <div class="calendar-day-header">Сб</div>
+            <div class="calendar-day-header">Вс</div>
+    `;
+
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startDay; i++) {
+        calendarHTML += '<div class="calendar-day empty"></div>';
+    }
+
+    // Add days of month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dateString = date.toDateString();
+        const hasMeals = mealHistory.some(meal => meal.date === dateString);
+        const isToday = date.toDateString() === today.toDateString();
+        
+        calendarHTML += `
+            <div class="calendar-day ${hasMeals ? 'has-meals' : ''} ${isToday ? 'today' : ''}" 
+                 data-date="${dateString}">
+                ${day}
+            </div>
+        `;
+    }
+
+    calendarHTML += '</div>';
+
+    container.innerHTML = calendarHTML;
+
+    // Add click handlers
+    const calendarDays = container.querySelectorAll('.calendar-day:not(.empty)');
+    calendarDays.forEach(day => {
+        day.addEventListener('click', () => {
+            const dateString = day.dataset.date;
+            const date = new Date(dateString);
+            selectDate(date, document.getElementById('selected-date'), 
+                      document.getElementById('day-stats'), 
+                      document.getElementById('day-meals'));
+            
+            // Update active day
+            calendarDays.forEach(d => d.classList.remove('selected'));
+            day.classList.add('selected');
+        });
+    });
+}
+
+function selectDate(date, dateDisplay, statsContainer, mealsContainer) {
+    if (!dateDisplay || !statsContainer || !mealsContainer) return;
+    
+    const dateString = date.toDateString();
+    const dayMeals = mealHistory.filter(meal => meal.date === dateString);
+    
+    // Update date display
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    dateDisplay.textContent = date.toLocaleDateString('ru-RU', options);
+    
+    // Calculate day stats
+    const dayStats = {
+        calories: dayMeals.reduce((sum, meal) => sum + meal.calories, 0),
+        protein: dayMeals.reduce((sum, meal) => sum + meal.protein, 0),
+        fats: dayMeals.reduce((sum, meal) => sum + meal.fats, 0),
+        carbs: dayMeals.reduce((sum, meal) => sum + meal.carbs, 0)
+    };
+    
+    // Update stats display
+    statsContainer.innerHTML = `
+        <div class="stat-item">
+            <div class="stat-value">${dayStats.calories}</div>
+            <div class="stat-label">Ккал</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">${dayStats.protein.toFixed(1)}</div>
+            <div class="stat-label">Белки</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">${dayStats.fats.toFixed(1)}</div>
+            <div class="stat-label">Жиры</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">${dayStats.carbs.toFixed(1)}</div>
+            <div class="stat-label">Углеводы</div>
+        </div>
+    `;
+    
+    // Update meals display
+    if (dayMeals.length === 0) {
+        mealsContainer.innerHTML = '<div class="no-meals">Нет записей за этот день</div>';
+    } else {
+        // Group meals by type
+        const mealsByType = {
+            breakfast: dayMeals.filter(meal => meal.type === 'breakfast'),
+            lunch: dayMeals.filter(meal => meal.type === 'lunch'),
+            dinner: dayMeals.filter(meal => meal.type === 'dinner'),
+            snack: dayMeals.filter(meal => meal.type === 'snack')
+        };
+        
+        let mealsHTML = '';
+        
+        Object.entries(mealsByType).forEach(([type, meals]) => {
+            if (meals.length > 0) {
+                const typeNames = {
+                    breakfast: 'Завтрак',
+                    lunch: 'Обед',
+                    dinner: 'Ужин',
+                    snack: 'Перекус'
+                };
+                
+                mealsHTML += `<div class="meal-section">
+                    <h4>${typeNames[type]}</h4>
+                    <div class="meal-items">`;
+                
+                meals.forEach(meal => {
+                    mealsHTML += `
+                        <div class="meal-item" onclick="showFoodModal(${JSON.stringify(meal).replace(/"/g, '&quot;')})">
+                            <div class="meal-item-info">
+                                <div class="meal-name">${meal.name}</div>
+                                <div class="meal-time">${meal.time}</div>
+                            </div>
+                            <div class="meal-calories">${meal.calories} ккал</div>
+                        </div>
+                    `;
+                });
+                
+                mealsHTML += `</div></div>`;
+            }
+        });
+        
+        mealsContainer.innerHTML = mealsHTML;
+    }
+}
+
+function initializeProfilePage() {
+    console.log('Initializing profile page...');
+    
+    // Load current profile data
+    loadProfileData();
+    
+    // Add event listeners
+    const saveBtn = document.getElementById('profile-save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveProfileData);
+    }
+    
+    // Add input change listeners for real-time updates
+    const inputs = document.querySelectorAll('.profile-input');
+    inputs.forEach(input => {
+        input.addEventListener('input', updateProfilePreview);
+    });
+    
+    console.log('Profile page initialized');
+}
+
+function loadProfileData() {
+    // Load saved profile data from localStorage
+    const savedProfile = localStorage.getItem('kbju_profile');
+    if (savedProfile) {
+        const profile = JSON.parse(savedProfile);
+        
+        // Update input fields
+        const nameInput = document.getElementById('profile-name-input');
+        const ageInput = document.getElementById('profile-age-input');
+        const heightInput = document.getElementById('profile-height-input');
+        const weightInput = document.getElementById('profile-weight-input');
+        const caloriesInput = document.getElementById('profile-calories-input');
+        const proteinInput = document.getElementById('profile-protein-input');
+        const fatsInput = document.getElementById('profile-fats-input');
+        const carbsInput = document.getElementById('profile-carbs-input');
+        
+        if (nameInput) nameInput.value = profile.name || 'Пользователь';
+        if (ageInput) ageInput.value = profile.age || 25;
+        if (heightInput) heightInput.value = profile.height || 170;
+        if (weightInput) weightInput.value = profile.weight || 70;
+        if (caloriesInput) caloriesInput.value = profile.targetCalories || 2200;
+        if (proteinInput) proteinInput.value = profile.targetProtein || 110;
+        if (fatsInput) fatsInput.value = profile.targetFats || 75;
+        if (carbsInput) carbsInput.value = profile.targetCarbs || 275;
+        
+        // Update profile name display
+        const profileNameDisplay = document.getElementById('profile-name');
+        if (profileNameDisplay) {
+            profileNameDisplay.textContent = profile.name || 'Пользователь';
+        }
+        
+        // Set activity level
+        const activityLevel = profile.activityLevel || 'sedentary';
+        const activityInput = document.querySelector(`input[name="activity"][value="${activityLevel}"]`);
+        if (activityInput) {
+            activityInput.checked = true;
+        }
+    }
+}
+
+function updateProfilePreview() {
+    const nameInput = document.getElementById('profile-name-input');
+    const profileNameDisplay = document.getElementById('profile-name');
+    
+    if (nameInput && profileNameDisplay) {
+        profileNameDisplay.textContent = nameInput.value || 'Пользователь';
+    }
+}
+
+function saveProfileData() {
+    // Collect form data
+    const profileData = {
+        name: document.getElementById('profile-name-input')?.value || 'Пользователь',
+        age: parseInt(document.getElementById('profile-age-input')?.value) || 25,
+        height: parseInt(document.getElementById('profile-height-input')?.value) || 170,
+        weight: parseInt(document.getElementById('profile-weight-input')?.value) || 70,
+        targetCalories: parseInt(document.getElementById('profile-calories-input')?.value) || 2200,
+        targetProtein: parseInt(document.getElementById('profile-protein-input')?.value) || 110,
+        targetFats: parseInt(document.getElementById('profile-fats-input')?.value) || 75,
+        targetCarbs: parseInt(document.getElementById('profile-carbs-input')?.value) || 275,
+        activityLevel: document.querySelector('input[name="activity"]:checked')?.value || 'sedentary'
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('kbju_profile', JSON.stringify(profileData));
+    
+    // Update global userProfile
+    userProfile = { ...userProfile, ...profileData };
+    
+    // Show success message
+    const saveBtn = document.getElementById('profile-save-btn');
+    if (saveBtn) {
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M16.667 5L7.5 14.167L3.333 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Сохранено!
+        `;
+        saveBtn.style.background = '#16a34a';
+        
+        setTimeout(() => {
+            saveBtn.innerHTML = originalText;
+            saveBtn.style.background = '';
+        }, 2000);
+    }
+    
+    // Update main page stats if we're on main page
+    if (currentPage === 'main') {
+        updateDailyStats();
+    }
+    
+    console.log('Profile data saved:', profileData);
 }
 
 function handleFile(file) {
@@ -402,50 +938,57 @@ function getRandomColor() {
 }
 
 function getFoodIcon(foodName) {
-    const icons = {
-        'каша': '🥣',
-        'салат': '🥗',
-        'суп': '🍲',
-        'курица': '🍗',
-        'рыба': '🐟',
-        'мясо': '🥩',
-        'хлеб': '🍞',
-        'фрукт': '🍎',
-        'овощ': '🥕',
-        'напиток': '🥤',
-        'кофе': '☕',
-        'чай': '🫖'
-    };
+    const name = foodName.toLowerCase();
     
-    for (const [key, icon] of Object.entries(icons)) {
-        if (foodName.toLowerCase().includes(key)) {
-            return icon;
-        }
-    }
+    if (name.includes('салат') || name.includes('овощ')) return '🥗';
+    if (name.includes('куриц') || name.includes('мясо')) return '🍗';
+    if (name.includes('рыб') || name.includes('лосось')) return '🐟';
+    if (name.includes('суп')) return '🍲';
+    if (name.includes('паста') || name.includes('макарон')) return '🍝';
+    if (name.includes('пицц')) return '🍕';
+    if (name.includes('бургер')) return '🍔';
+    if (name.includes('суши') || name.includes('ролл')) return '🍣';
+    if (name.includes('каша') || name.includes('овсянк')) return '🥣';
+    if (name.includes('яйц') || name.includes('омлет')) return '🍳';
+    if (name.includes('хлеб') || name.includes('тост')) return '🍞';
+    if (name.includes('фрукт') || name.includes('яблоко')) return '🍎';
+    if (name.includes('мороженое') || name.includes('десерт')) return '🍨';
+    if (name.includes('кофе') || name.includes('чай')) return '☕';
+    if (name.includes('сок') || name.includes('напиток')) return '🥤';
     
     return '🍽️';
 }
 
 function deleteMeal(id) {
-    const idx = mealHistory.findIndex(meal => meal.id === id);
-    if (idx === -1) return;
-    
-    mealHistory.splice(idx, 1);
+    mealHistory = mealHistory.filter(meal => meal.id !== id);
     localStorage.setItem('kbju_mealHistory', JSON.stringify(mealHistory));
-    
     updateDailyStats();
     updateFoodList();
+    
+    // Если мы на странице истории, обновляем её
+    if (currentPage === 'history') {
+        const selectedDate = document.querySelector('.calendar-day.selected');
+        if (selectedDate) {
+            const dateString = selectedDate.dataset.date;
+            const date = new Date(dateString);
+            selectDate(date, document.getElementById('selected-date'), 
+                      document.getElementById('day-stats'), 
+                      document.getElementById('day-meals'));
+        }
+    }
 }
 
 function updateTodayDate() {
     const today = new Date();
-    const options = { day: 'numeric', month: 'long' };
-    const dateString = today.toLocaleDateString('ru-RU', options);
-    document.getElementById('today-date').textContent = dateString;
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateElement = document.getElementById('today-date');
+    if (dateElement) {
+        dateElement.textContent = today.toLocaleDateString('ru-RU', options);
+    }
 }
 
 function loadProfile() {
-    const savedProfile = localStorage.getItem('kbju_userProfile');
+    const savedProfile = localStorage.getItem('kbju_profile');
     if (savedProfile) {
         userProfile = { ...userProfile, ...JSON.parse(savedProfile) };
     }
