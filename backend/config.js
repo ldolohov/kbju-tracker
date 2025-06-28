@@ -8,8 +8,11 @@ module.exports = {
         port: 5432,
     },
     server: {
-        cors: {}, // разрешить все CORS-запросы
-        port: 3000, // или любой другой порт
+        cors: {
+            origin: process.env.CORS_ORIGIN || '*',
+            credentials: true
+        },
+        port: process.env.PORT || 3000,
     },
     ai: {
         openai: {
