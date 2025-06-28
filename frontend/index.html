@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КБЖУ Трекер</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>КБЖУ Трекер</h1>
+            <p>Определение калорий по фотографии</p>
+        </div>
+
+        <!-- Главная страница -->
+        <div class="page" id="home-page">
+            <div class="main-content">
+                <div class="photo-section">
+                    <button class="photo-upload" onclick="takePhoto()">
+                        Сфотографировать блюдо
+                    </button>
+                    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="handleFileSelect(event)">
+                    <div class="demo-result" id="demo-result">
+                        <h4>✅ Блюдо распознано!</h4>
+                        <p><strong>Блюдо:</strong> <span id="detected-food"></span></p>
+                        <p><strong>Порция:</strong> <span id="detected-portion"></span></p>
+                    </div>
+                </div>
+
+                <div class="meal-type">
+                    <h3>Приём пищи</h3>
+                    <div class="meal-buttons">
+                        <button class="meal-btn active" data-meal="breakfast">🌅 Завтрак</button>
+                        <button class="meal-btn" data-meal="lunch">🌞 Обед</button>
+                        <button class="meal-btn" data-meal="dinner">🌙 Ужин</button>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Анализируем ваше блюдо...</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card calories">
+                        <div class="stat-value" id="calories">0</div>
+                        <div class="stat-label">КАЛОРИИ</div>
+                    </div>
+                    <div class="stat-card protein">
+                        <div class="stat-value" id="protein">0г</div>
+                        <div class="stat-label">БЕЛКИ</div>
+                    </div>
+                    <div class="stat-card fats">
+                        <div class="stat-value" id="fats">0г</div>
+                        <div class="stat-label">ЖИРЫ</div>
+                    </div>
+                    <div class="stat-card carbs">
+                        <div class="stat-value" id="carbs">0г</div>
+                        <div class="stat-label">УГЛЕВОДЫ</div>
+                    </div>
+                </div>
+
+                <div class="ai-analysis">
+                    <h3>💡 Анализ рациона</h3>
+                    <p id="ai-advice"></p>
+                </div>
+
+                <div class="history-section">
+                    <h3>📅 Последние приемы пищи</h3>
+                    <div id="recent-meals"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница История -->
+        <div class="page" id="history-page" style="display: none;">
+            <div class="main-content">
+                <div class="page-header">
+                    <h2>📅 История питания</h2>
+                </div>
+
+                <div class="date-selector">
+                    <button class="date-btn active" onclick="filterHistory('today')">Сегодня</button>
+                    <button class="date-btn" onclick="filterHistory('week')">Неделя</button>
+                    <button class="date-btn" onclick="filterHistory('month')">Месяц</button>
+                </div>
+
+                <div class="history-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="history-total-calories">0</div>
+                        <div class="stat-label">ВСЕГО КАЛОРИЙ</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="history-meals-count">0</div>
+                        <div class="stat-label">ПРИЕМОВ ПИЩИ</div>
+                    </div>
+                </div>
+
+                <div class="history-detailed" id="history-detailed"></div>
+            </div>
+        </div>
+
+        <!-- Страница Статистика -->
+        <div class="page" id="analytics-page" style="display: none;">
+            <div class="main-content">
+                <div class="page-header">
+                    <h2>📈 Статистика</h2>
+                </div>
+
+                <div class="analytics-period">
+                    <button class="period-btn active" onclick="changePeriod('week')">Неделя</button>
+                    <button class="period-btn" onclick="changePeriod('month')">Месяц</button>
+                </div>
+
+                <div class="analytics-overview">
+                    <div class="stat-card calories">
+                        <div class="stat-value" id="analytics-avg-calories">0</div>
+                        <div class="stat-label">СРЕДН. КАЛОРИИ/ДЕНЬ</div>
+                        <div class="stat-change positive" id="analytics-calories-change"></div>
+                    </div>
+                    <div class="stat-card protein">
+                        <div class="stat-value" id="analytics-avg-protein">0г</div>
+                        <div class="stat-label">СРЕДН. БЕЛКИ/ДЕНЬ</div>
+                        <div class="stat-change positive" id="analytics-protein-change"></div>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <h3>График калорий за неделю</h3>
+                    <div class="chart-container">
+                        <div class="chart-bars" id="analytics-chart-bars"></div>
+                    </div>
+                </div>
+
+                <div class="nutrition-breakdown">
+                    <h3>Распределение БЖУ</h3>
+                    <div class="macro-charts">
+                        <div class="macro-chart">
+                            <div class="macro-circle" id="macro-protein">
+                                <div class="macro-label">Белки</div>
+                                <div class="macro-value" id="macro-protein-value">0%</div>
+                            </div>
+                        </div>
+                        <div class="macro-chart">
+                            <div class="macro-circle" id="macro-fats">
+                                <div class="macro-label">Жиры</div>
+                                <div class="macro-value" id="macro-fats-value">0%</div>
+                            </div>
+                        </div>
+                        <div class="macro-chart">
+                            <div class="macro-circle" id="macro-carbs">
+                                <div class="macro-label">Углеводы</div>
+                                <div class="macro-value" id="macro-carbs-value">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="habits-section">
+                    <h3>Привычки питания</h3>
+                    <div id="habits-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница Профиль -->
+        <div class="page" id="profile-page" style="display: none;">
+            <div class="main-content">
+                <div class="page-header">
+                    <h2>👤 Профиль</h2>
+                </div>
+
+                <div class="profile-card">
+                    <div class="profile-avatar">
+                        <div class="avatar-circle">👤</div>
+                        <button class="change-avatar-btn">Изменить фото</button>
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="profile-name"></h3>
+                        <p id="profile-goal"></p>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Личные данные</h3>
+                    <div class="setting-item">
+                        <label>Имя</label>
+                        <input type="text" id="user-name" placeholder="Введите имя">
+                    </div>
+                    <div class="setting-item">
+                        <label>Возраст</label>
+                        <input type="number" id="user-age" placeholder="Введите возраст">
+                    </div>
+                    <div class="setting-item">
+                        <label>Рост (см)</label>
+                        <input type="number" id="user-height" placeholder="Введите рост">
+                    </div>
+                    <div class="setting-item">
+                        <label>Вес (кг)</label>
+                        <input type="number" id="user-weight" placeholder="Введите вес">
+                    </div>
+                    <div class="setting-item">
+                        <label>Пол</label>
+                        <select id="user-gender">
+                            <option value="male">Мужской</option>
+                            <option value="female">Женский</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="goals-section">
+                    <h3>Цели питания</h3>
+                    <div class="goal-selector">
+                        <button class="goal-btn" data-goal="maintain">Поддержание веса</button>
+                        <button class="goal-btn" data-goal="lose">Похудение</button>
+                        <button class="goal-btn" data-goal="gain">Набор массы</button>
+                    </div>
+                    <div class="daily-goals">
+                        <h4>Дневные цели</h4>
+                        <div class="goal-item">
+                            <label>Калории</label>
+                            <input type="number" id="goal-calories">
+                            <span>ккал</span>
+                        </div>
+                        <div class="goal-item">
+                            <label>Белки</label>
+                            <input type="number" id="goal-protein">
+                            <span>г</span>
+                        </div>
+                        <div class="goal-item">
+                            <label>Жиры</label>
+                            <input type="number" id="goal-fats">
+                            <span>г</span>
+                        </div>
+                        <div class="goal-item">
+                            <label>Углеводы</label>
+                            <input type="number" id="goal-carbs">
+                            <span>г</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preferences-section">
+                    <h3>Настройки</h3>
+                    <div class="preference-item">
+                        <label>Уведомления</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="notifications">
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+                    <div class="preference-item">
+                        <label>Темная тема</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="dark-theme">
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+                    <div class="preference-item">
+                        <label>Единицы измерения</label>
+                        <select id="units">
+                            <option value="metric">Метрические</option>
+                            <option value="imperial">Имперские</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="save-btn" onclick="saveProfile()">💾 Сохранить изменения</button>
+                    <button class="export-btn" onclick="exportData()">📤 Экспорт данных</button>
+                    <button class="reset-btn" onclick="resetData()">🔄 Сброс данных</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="showPage('home')">
+                <div class="nav-icon">🏠</div>
+                <div>Главная</div>
+            </div>
+            <div class="nav-item" onclick="showPage('history')">
+                <div class="nav-icon">📊</div>
+                <div>История</div>
+            </div>
+            <div class="nav-item" onclick="showPage('analytics')">
+                <div class="nav-icon">📈</div>
+                <div>Статистика</div>
+            </div>
+            <div class="nav-item" onclick="showPage('profile')">
+                <div class="nav-icon">👤</div>
+                <div>Профиль</div>
+            </div>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>

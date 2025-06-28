@@ -1,0 +1,29 @@
+{
+  "name": "kbju-tracker",
+  "version": "1.0.0",
+  "description": "Трекер питания с AI анализом фото",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "build": "echo 'Build completed'",
+    "postinstall": "npm install --prefix backend"
+  },
+  "keywords": ["nutrition", "tracker", "ai", "food"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.0",
+    "multer": "^2.0.1",
+    "openai": "^5.7.0",
+    "sharp": "^0.34.2",
+    "axios": "^1.10.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
