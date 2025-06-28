@@ -40,9 +40,17 @@
 
 let nextMealId = 6;
 // Автоматическое определение API URL для production/development
-const API_BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api' 
-    : '/api';
+const API_BASE_URL = (() => {
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const url = isLocalhost ? 'http://localhost:3000/api' : '/api';
+    
+    console.log('Hostname:', hostname);
+    console.log('Is localhost:', isLocalhost);
+    console.log('API_BASE_URL:', url);
+    
+    return url;
+})();
 
 // Профиль пользователя
 let userProfile = {
@@ -215,7 +223,7 @@ async function handleFileSelect(event) {
         formData.append('mealType', getSelectedMealType());
         
         try {
-            const response = await fetch('http://localhost:3000/api/analyze-food', {
+            const response = await fetch(`${API_BASE_URL}/analyze-food`, {
                 method: 'POST',
                 body: formData
             });
