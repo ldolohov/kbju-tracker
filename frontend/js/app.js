@@ -215,7 +215,7 @@ async function handleFileSelect(event) {
         formData.append('mealType', getSelectedMealType());
         
         try {
-            const response = await fetch('http://localhost:3000/api/analyze-food', {
+            const response = await fetch(`${API_BASE_URL}/analyze-food`, {
                 method: 'POST',
                 body: formData
             });
@@ -367,8 +367,215 @@ document.getElementById('file-input').addEventListener('change', function() {
 });
 
 function loadProfile() {
-    // Заглушка: функция загрузки профиля. Реализуйте по необходимости.
-    return;
+    const savedProfile = localStorage.getItem('kbju_userProfile');
+    if (savedProfile) {
+        userProfile = { ...userProfile, ...JSON.parse(savedProfile) };
+    }
+    
+    // Заполняем поля формы
+    document.getElementById('user-name').value = userProfile.name;
+    document.getElementById('user-age').value = userProfile.age;
+    document.getElementById('user-height').value = userProfile.height;
+    document.getElementById('user-weight').value = userProfile.weight;
+    document.getElementById('user-gender').value = userProfile.gender;
+    document.getElementById('notifications').checked = userProfile.notifications;
+    document.getElementById('dark-theme').checked = userProfile.darkTheme;
+    document.getElementById('units').value = userProfile.units;
+    
+    // Устанавливаем активную цель
+    document.querySelectorAll('.goal-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.goal === userProfile.goal) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Заполняем цели
+    document.getElementById('goal-calories').value = userProfile.targetCalories;
+    document.getElementById('goal-protein').value = userProfile.targetProtein;
+    document.getElementById('goal-fats').value = userProfile.targetFats;
+    document.getElementById('goal-carbs').value = userProfile.targetCarbs;
+}
+
+function updateProfilePage() {
+    loadProfile();
+    updateProfileDisplay();
+}
+
+function updateProfileDisplay() {
+    document.getElementById('profile-name').textContent = userProfile.name;
+    
+    const goalTexts = {
+        maintain: 'Поддержание веса',
+        lose: 'Похудение',
+        gain: 'Набор массы'
+    };
+    document.getElementById('profile-goal').textContent = goalTexts[userProfile.goal] || 'Не указано';
+}
+
+function updateGoalInputs() {
+    const goal = userProfile.goal;
+    let calories, protein, fats, carbs;
+    
+    // Базовые значения в зависимости от цели
+    switch (goal) {
+        case 'lose':
+            calories = 1800;
+            protein = 120;
+            fats = 60;
+            carbs = 180;
+            break;
+        case 'gain':
+            calories = 2800;
+            protein = 140;
+            fats = 90;
+            carbs = 350;
+            break;
+        default: // maintain
+            calories = 2200;
+            protein = 110;
+            fats = 75;
+            carbs = 275;
+    }
+    
+    // Корректируем под пол и вес
+    if (userProfile.gender === 'female') {
+        calories = Math.round(calories * 0.85);
+        protein = Math.round(protein * 0.9);
+        fats = Math.round(fats * 0.9);
+        carbs = Math.round(carbs * 0.85);
+    }
+    
+    // Корректируем под вес
+    const weightFactor = userProfile.weight / 70;
+    calories = Math.round(calories * weightFactor);
+    protein = Math.round(protein * weightFactor);
+    fats = Math.round(fats * weightFactor);
+    carbs = Math.round(carbs * weightFactor);
+    
+    userProfile.targetCalories = calories;
+    userProfile.targetProtein = protein;
+    userProfile.targetFats = fats;
+    userProfile.targetCarbs = carbs;
+    
+    document.getElementById('goal-calories').value = calories;
+    document.getElementById('goal-protein').value = protein;
+    document.getElementById('goal-fats').value = fats;
+    document.getElementById('goal-carbs').value = carbs;
+}
+
+function saveProfile() {
+    // Собираем данные из формы
+    userProfile.name = document.getElementById('user-name').value || 'Пользователь';
+    userProfile.age = parseInt(document.getElementById('user-age').value) || 25;
+    userProfile.height = parseInt(document.getElementById('user-height').value) || 170;
+    userProfile.weight = parseInt(document.getElementById('user-weight').value) || 70;
+    userProfile.gender = document.getElementById('user-gender').value;
+    userProfile.notifications = document.getElementById('notifications').checked;
+    userProfile.darkTheme = document.getElementById('dark-theme').checked;
+    userProfile.units = document.getElementById('units').value;
+    
+    // Цели
+    userProfile.targetCalories = parseInt(document.getElementById('goal-calories').value) || 2200;
+    userProfile.targetProtein = parseInt(document.getElementById('goal-protein').value) || 110;
+    userProfile.targetFats = parseInt(document.getElementById('goal-fats').value) || 75;
+    userProfile.targetCarbs = parseInt(document.getElementById('goal-carbs').value) || 275;
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('kbju_userProfile', JSON.stringify(userProfile));
+    
+    // Обновляем отображение
+    updateProfileDisplay();
+    
+    // Показываем уведомление
+    showNotification('Профиль сохранен!', 'success');
+}
+
+function exportData() {
+    const exportData = {
+        profile: userProfile,
+        mealHistory: mealHistory,
+        stats: currentStats,
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `kbju-tracker-data-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    showNotification('Данные экспортированы!', 'success');
+}
+
+function resetData() {
+    if (confirm('Вы уверены, что хотите сбросить все данные? Это действие нельзя отменить.')) {
+        localStorage.removeItem('kbju_mealHistory');
+        localStorage.removeItem('kbju_stats');
+        localStorage.removeItem('kbju_userProfile');
+        
+        // Сбрасываем переменные
+        mealHistory = [];
+        currentStats = { calories: 0, protein: 0, fats: 0, carbs: 0 };
+        userProfile = {
+            name: "Пользователь",
+            age: 25,
+            height: 170,
+            weight: 70,
+            gender: "male",
+            goal: "maintain",
+            targetCalories: 2200,
+            targetProtein: 110,
+            targetFats: 75,
+            targetCarbs: 275,
+            notifications: true,
+            darkTheme: false,
+            units: "metric"
+        };
+        
+        // Обновляем интерфейс
+        updateStats();
+        updateRecentMeals();
+        updateHistoryPage();
+        updateAnalyticsPage();
+        loadProfile();
+        updateProfileDisplay();
+        
+        showNotification('Данные сброшены!', 'info');
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Создаем уведомление
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Удаляем через 3 секунды
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
 }
 
 function updateRecentMeals() {
@@ -401,13 +608,293 @@ function updateRecentMeals() {
 }
 
 function updateHistoryPage() {
-    // Заглушка: обновление страницы истории. Реализуйте по необходимости.
-    return;
+    const today = new Date().toDateString();
+    const todayMeals = mealHistory.filter(meal => meal.date === today);
+    
+    // Обновляем статистику истории
+    const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.calories, 0);
+    const totalMeals = todayMeals.length;
+    
+    document.getElementById('history-total-calories').textContent = totalCalories;
+    document.getElementById('history-meals-count').textContent = totalMeals;
+    
+    // Отрисовываем детальную историю
+    renderDetailedHistory(todayMeals);
+}
+
+function renderDetailedHistory(meals) {
+    const container = document.getElementById('history-detailed');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (meals.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Нет записей за выбранный период</p>';
+        return;
+    }
+    
+    // Группируем по времени приема пищи
+    const mealTypes = {
+        breakfast: { name: '🌅 Завтрак', meals: [] },
+        lunch: { name: '🌞 Обед', meals: [] },
+        dinner: { name: '🌙 Ужин', meals: [] }
+    };
+    
+    meals.forEach(meal => {
+        if (mealTypes[meal.type]) {
+            mealTypes[meal.type].meals.push(meal);
+        }
+    });
+    
+    Object.values(mealTypes).forEach(type => {
+        if (type.meals.length > 0) {
+            const typeSection = document.createElement('div');
+            typeSection.className = 'history-day';
+            typeSection.innerHTML = `<h3>${type.name}</h3>`;
+            
+            type.meals.forEach(meal => {
+                const mealElement = document.createElement('div');
+                mealElement.className = 'meal-info';
+                mealElement.innerHTML = `
+                    <div class="meal-name">${meal.name}</div>
+                    <div class="meal-details">
+                        <div class="meal-type">${meal.time}</div>
+                        <div class="meal-nutrition">
+                            <span class="nutrition-item">${meal.calories} ккал</span>
+                            <span class="nutrition-item">Б: ${meal.protein}г</span>
+                            <span class="nutrition-item">Ж: ${meal.fats}г</span>
+                            <span class="nutrition-item">У: ${meal.carbs}г</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteMeal(${meal.id})">🗑️</button>
+                    </div>
+                `;
+                typeSection.appendChild(mealElement);
+            });
+            
+            container.appendChild(typeSection);
+        }
+    });
+}
+
+function filterHistory(period) {
+    const today = new Date();
+    let filteredMeals = [];
+    
+    switch (period) {
+        case 'today':
+            filteredMeals = mealHistory.filter(meal => meal.date === today.toDateString());
+            break;
+        case 'week':
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            filteredMeals = mealHistory.filter(meal => {
+                const mealDate = new Date(meal.date);
+                return mealDate >= weekAgo;
+            });
+            break;
+        case 'month':
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            filteredMeals = mealHistory.filter(meal => {
+                const mealDate = new Date(meal.date);
+                return mealDate >= monthAgo;
+            });
+            break;
+    }
+    
+    // Обновляем статистику
+    const totalCalories = filteredMeals.reduce((sum, meal) => sum + meal.calories, 0);
+    const totalMeals = filteredMeals.length;
+    
+    document.getElementById('history-total-calories').textContent = totalCalories;
+    document.getElementById('history-meals-count').textContent = totalMeals;
+    
+    // Отрисовываем отфильтрованную историю
+    renderDetailedHistory(filteredMeals);
 }
 
 function updateAnalyticsPage() {
-    // Заглушка: обновление страницы аналитики. Реализуйте по необходимости.
-    return;
+    updateAnalyticsStats();
+    renderCaloriesChart();
+    updateMacroBreakdown();
+    updateHabits();
+}
+
+function updateAnalyticsStats() {
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    // Получаем данные за неделю
+    const weekMeals = mealHistory.filter(meal => {
+        const mealDate = new Date(meal.date);
+        return mealDate >= weekAgo;
+    });
+    
+    if (weekMeals.length === 0) {
+        document.getElementById('analytics-avg-calories').textContent = '0';
+        document.getElementById('analytics-avg-protein').textContent = '0г';
+        return;
+    }
+    
+    // Группируем по дням
+    const dailyStats = {};
+    weekMeals.forEach(meal => {
+        if (!dailyStats[meal.date]) {
+            dailyStats[meal.date] = { calories: 0, protein: 0, fats: 0, carbs: 0 };
+        }
+        dailyStats[meal.date].calories += meal.calories;
+        dailyStats[meal.date].protein += meal.protein;
+        dailyStats[meal.date].fats += meal.fats;
+        dailyStats[meal.date].carbs += meal.carbs;
+    });
+    
+    // Вычисляем средние значения
+    const daysCount = Object.keys(dailyStats).length;
+    const avgCalories = Math.round(Object.values(dailyStats).reduce((sum, day) => sum + day.calories, 0) / daysCount);
+    const avgProtein = Math.round(Object.values(dailyStats).reduce((sum, day) => sum + day.protein, 0) / daysCount);
+    
+    document.getElementById('analytics-avg-calories').textContent = avgCalories;
+    document.getElementById('analytics-avg-protein').textContent = avgProtein + 'г';
+}
+
+function renderCaloriesChart() {
+    const container = document.getElementById('analytics-chart-bars');
+    if (!container) return;
+    
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    // Получаем данные за неделю
+    const weekMeals = mealHistory.filter(meal => {
+        const mealDate = new Date(meal.date);
+        return mealDate >= weekAgo;
+    });
+    
+    // Группируем по дням
+    const dailyStats = {};
+    weekMeals.forEach(meal => {
+        if (!dailyStats[meal.date]) {
+            dailyStats[meal.date] = { calories: 0 };
+        }
+        dailyStats[meal.date].calories += meal.calories;
+    });
+    
+    // Создаем массив для последних 7 дней
+    const chartData = [];
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateString = date.toDateString();
+        const dayName = date.toLocaleDateString('ru-RU', { weekday: 'short' });
+        const calories = dailyStats[dateString] ? dailyStats[dateString].calories : 0;
+        chartData.push({ day: dayName, calories: calories });
+    }
+    
+    // Находим максимальное значение для масштабирования
+    const maxCalories = Math.max(...chartData.map(d => d.calories), 1);
+    
+    // Отрисовываем график
+    container.innerHTML = '';
+    chartData.forEach(data => {
+        const barHeight = (data.calories / maxCalories) * 100;
+        const bar = document.createElement('div');
+        bar.className = 'chart-bar';
+        bar.innerHTML = `
+            <div class="bar-value">${data.calories}</div>
+            <div class="bar-fill" style="height: ${barHeight}%"></div>
+            <div class="bar-label">${data.day}</div>
+        `;
+        container.appendChild(bar);
+    });
+}
+
+function updateMacroBreakdown() {
+    const today = new Date().toDateString();
+    const todayMeals = mealHistory.filter(meal => meal.date === today);
+    
+    if (todayMeals.length === 0) {
+        document.getElementById('macro-protein-value').textContent = '0%';
+        document.getElementById('macro-fats-value').textContent = '0%';
+        document.getElementById('macro-carbs-value').textContent = '0%';
+        return;
+    }
+    
+    const totalProtein = todayMeals.reduce((sum, meal) => sum + meal.protein, 0);
+    const totalFats = todayMeals.reduce((sum, meal) => sum + meal.fats, 0);
+    const totalCarbs = todayMeals.reduce((sum, meal) => sum + meal.carbs, 0);
+    
+    const totalGrams = totalProtein + totalFats + totalCarbs;
+    
+    if (totalGrams === 0) {
+        document.getElementById('macro-protein-value').textContent = '0%';
+        document.getElementById('macro-fats-value').textContent = '0%';
+        document.getElementById('macro-carbs-value').textContent = '0%';
+        return;
+    }
+    
+    const proteinPercent = Math.round((totalProtein / totalGrams) * 100);
+    const fatsPercent = Math.round((totalFats / totalGrams) * 100);
+    const carbsPercent = Math.round((totalCarbs / totalGrams) * 100);
+    
+    document.getElementById('macro-protein-value').textContent = proteinPercent + '%';
+    document.getElementById('macro-fats-value').textContent = fatsPercent + '%';
+    document.getElementById('macro-carbs-value').textContent = carbsPercent + '%';
+    
+    // Обновляем круговые диаграммы
+    document.getElementById('macro-protein').style.background = `conic-gradient(#a8edea 0deg ${proteinPercent * 3.6}deg, #f0f0f0 ${proteinPercent * 3.6}deg 360deg)`;
+    document.getElementById('macro-fats').style.background = `conic-gradient(#ffecd2 0deg ${fatsPercent * 3.6}deg, #f0f0f0 ${fatsPercent * 3.6}deg 360deg)`;
+    document.getElementById('macro-carbs').style.background = `conic-gradient(#d299c2 0deg ${carbsPercent * 3.6}deg, #f0f0f0 ${carbsPercent * 3.6}deg 360deg)`;
+}
+
+function updateHabits() {
+    const container = document.getElementById('habits-list');
+    if (!container) return;
+    
+    const today = new Date().toDateString();
+    const todayMeals = mealHistory.filter(meal => meal.date === today);
+    
+    const habits = [
+        {
+            name: 'Регулярность питания',
+            description: '3 приема пищи в день',
+            score: todayMeals.length >= 3 ? 'excellent' : todayMeals.length >= 2 ? 'good' : 'average',
+            value: `${todayMeals.length}/3`
+        },
+        {
+            name: 'Баланс белков',
+            description: 'Достаточное количество белка',
+            score: 'good',
+            value: 'Хорошо'
+        },
+        {
+            name: 'Разнообразие',
+            description: 'Разные типы блюд',
+            score: 'average',
+            value: 'Можно лучше'
+        }
+    ];
+    
+    container.innerHTML = '';
+    habits.forEach(habit => {
+        const habitElement = document.createElement('div');
+        habitElement.className = 'habit-item';
+        habitElement.innerHTML = `
+            <div class="habit-info">
+                <div class="habit-name">${habit.name}</div>
+                <div class="habit-description">${habit.description}</div>
+            </div>
+            <div class="habit-score ${habit.score}">${habit.value}</div>
+        `;
+        container.appendChild(habitElement);
+    });
+}
+
+function changePeriod(period) {
+    // Обновляем активную кнопку
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Обновляем аналитику для выбранного периода
+    updateAnalyticsPage();
 }
 
 function deleteMeal(id) {
