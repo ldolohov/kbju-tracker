@@ -52,9 +52,14 @@ const saveSection = document.getElementById('save-section');
 const retakeBtn = document.getElementById('retake-btn');
 const saveBtn = document.getElementById('save-btn');
 
+// Modal elements
+const foodModal = document.getElementById('food-modal');
+const modalClose = document.getElementById('modal-close');
+
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    initializeModal();
     loadProfile();
     updateDailyStats();
     updateFoodList();
@@ -130,6 +135,28 @@ function initializeApp() {
     });
 
     console.log('Приложение инициализировано');
+}
+
+function initializeModal() {
+    // Close modal
+    modalClose.addEventListener('click', closeModal);
+    foodModal.addEventListener('click', (e) => {
+        if (e.target === foodModal) closeModal();
+    });
+    
+    // Modal action buttons
+    document.querySelector('.modal-action-btn.delete').addEventListener('click', () => {
+        const currentFoodId = foodModal.dataset.foodId;
+        if (currentFoodId) {
+            deleteMeal(parseInt(currentFoodId));
+            closeModal();
+        }
+    });
+
+    document.querySelector('.modal-action-btn.edit').addEventListener('click', () => {
+        alert('Редактирование порции - функция в разработке');
+        closeModal();
+    });
 }
 
 function handleFile(file) {
@@ -319,14 +346,54 @@ function updateFoodList() {
                         <h4>${meal.name}</h4>
                         <p>~300г • ${meal.calories} ккал</p>
                     </div>
-                    <button class="food-menu" onclick="deleteMeal(${meal.id})">⋮</button>
+                    <button class="food-menu" onclick="showFoodMenu(${meal.id})">⋮</button>
                 `;
+                
+                // Добавляем обработчик клика для открытия модального окна
+                foodItem.addEventListener('click', (e) => {
+                    // Предотвращаем открытие модального окна при клике на кнопку меню
+                    if (e.target.closest('.food-menu')) return;
+                    
+                    showFoodModal(meal);
+                });
+                
                 mealGroup.appendChild(foodItem);
             });
             
             container.appendChild(mealGroup);
         }
     });
+}
+
+function showFoodModal(meal) {
+    // Обновляем содержимое модального окна
+    document.getElementById('modal-food-name').textContent = meal.name;
+    document.getElementById('modal-food-portion').textContent = `Порция: ~300г`;
+    document.getElementById('modal-calories').textContent = meal.calories;
+    document.getElementById('modal-protein').textContent = meal.protein;
+    document.getElementById('modal-fat').textContent = meal.fats;
+    document.getElementById('modal-carbs').textContent = meal.carbs;
+    
+    // Сохраняем ID блюда для удаления
+    foodModal.dataset.foodId = meal.id;
+    
+    // Показываем модальное окно
+    foodModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    foodModal.classList.remove('active');
+    document.body.style.overflow = '';
+    delete foodModal.dataset.foodId;
+}
+
+function showFoodMenu(mealId) {
+    // Показываем контекстное меню или сразу открываем модальное окно
+    const meal = mealHistory.find(m => m.id === mealId);
+    if (meal) {
+        showFoodModal(meal);
+    }
 }
 
 function getRandomColor() {
