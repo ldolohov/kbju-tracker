@@ -7,7 +7,10 @@
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
     "build": "echo 'Build completed'",
-    "postinstall": "npm install --prefix backend"
+    "postinstall": "npm install --prefix backend",
+    "dev:switch": "git checkout develop && npm run dev",
+    "prod:switch": "git checkout main && npm start",
+    "deploy": "git checkout main && git merge develop && git push origin main"
   },
   "keywords": ["nutrition", "tracker", "ai", "food"],
   "author": "",
