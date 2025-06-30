@@ -177,6 +177,7 @@ function initializeApp() {
         }
         
         const foodName = document.getElementById('food-name');
+        const portion = document.getElementById('food-portion');
         const calories = document.getElementById('calories');
         const protein = document.getElementById('protein');
         const fat = document.getElementById('fat');
@@ -189,6 +190,7 @@ function initializeApp() {
         
         const foodData = {
             name: foodName.textContent,
+            portion: portion ? portion.textContent : '',
             calories: parseInt(calories.textContent),
             protein: parseFloat(protein.textContent),
             fats: parseFloat(fat.textContent),
@@ -769,7 +771,7 @@ function showAnalysis() {
 function showResults(result) {
     // Update result card
     document.getElementById('food-name').textContent = result.name;
-    document.getElementById('food-portion').textContent = result.portion || 'Порция ~300г';
+    document.getElementById('food-portion').textContent = result.portion ? result.portion : 'Порция: не определено';
     document.getElementById('confidence').textContent = result.confidence || '95%';
     
     resultCard.classList.add('active');
@@ -965,7 +967,7 @@ function updateFoodList() {
                     <div class="food-icon" style="background: ${getRandomColor()};">${getFoodIcon(meal.name)}</div>
                     <div class="food-info">
                         <h4>${meal.name}</h4>
-                        <p>~300г • ${meal.calories} ккал</p>
+                        <p>${meal.portion ? meal.portion : 'Порция: не определено'} • ${meal.calories} ккал</p>
                     </div>
                     <button class="food-menu" onclick="showFoodMenu(${meal.id})">⋮</button>
                 `;
@@ -989,7 +991,7 @@ function updateFoodList() {
 function showFoodModal(meal) {
     // Обновляем содержимое модального окна
     document.getElementById('modal-food-name').textContent = meal.name;
-    document.getElementById('modal-food-portion').textContent = `Порция: ~300г`;
+    document.getElementById('modal-food-portion').textContent = meal.portion ? meal.portion : 'Порция: не определено';
     document.getElementById('modal-calories').textContent = meal.calories;
     document.getElementById('modal-protein').textContent = meal.protein;
     document.getElementById('modal-fat').textContent = meal.fats;
