@@ -26,7 +26,7 @@ async function analyzeFood(imageBase64) {
                     ]
                 }
             ],
-            max_tokens: 300
+            max_completion_tokens: 300
         });
 
         let content = response.choices[0].message.content.trim();
