@@ -101,9 +101,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSidebar();
     initializeNavigation();
     loadProfile();
-    updateDailyStats();
-    updateFoodList();
-    updateTodayDate();
+    
+    // Небольшая задержка для гарантии загрузки всех элементов
+    setTimeout(() => {
+        updateDailyStats();
+        updateFoodList();
+        updateTodayDate();
+    }, 100);
 });
 
 function initializeApp() {
@@ -181,6 +185,7 @@ function initializeApp() {
         }
         
         const foodName = document.getElementById('food-name');
+        const portion = document.getElementById('food-portion');
         const calories = document.getElementById('calories');
         const protein = document.getElementById('protein');
         const fat = document.getElementById('fat');
@@ -193,6 +198,7 @@ function initializeApp() {
         
         const foodData = {
             name: foodName.textContent,
+            portion: portion ? portion.textContent : '',
             calories: parseInt(calories.textContent),
             protein: parseFloat(protein.textContent),
             fats: parseFloat(fat.textContent),
@@ -599,13 +605,62 @@ function initializeProfilePage() {
         saveBtn.addEventListener('click', saveProfileData);
     }
     
-    // Add input change listeners for real-time updates
+    // Add auto-calculate button listener
+    const autoCalculateBtn = document.getElementById('auto-calculate-btn');
+    if (autoCalculateBtn) {
+        autoCalculateBtn.addEventListener('click', () => {
+            updateNutritionGoals();
+            
+            // Show success message
+            const originalText = autoCalculateBtn.innerHTML;
+            autoCalculateBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M16.667 5L7.5 14.167L3.333 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Рассчитано!
+            `;
+            autoCalculateBtn.style.background = '#16a34a';
+            autoCalculateBtn.style.color = 'white';
+            autoCalculateBtn.style.borderColor = '#16a34a';
+            
+            setTimeout(() => {
+                autoCalculateBtn.innerHTML = originalText;
+                autoCalculateBtn.style.background = '';
+                autoCalculateBtn.style.color = '';
+                autoCalculateBtn.style.borderColor = '';
+            }, 2000);
+        });
+    }
+    
+    // Add input change listeners for real-time updates and auto-save
     const inputs = document.querySelectorAll('.profile-input');
     inputs.forEach(input => {
         input.addEventListener('input', updateProfilePreview);
+        // Автоматическое сохранение при изменении
+        input.addEventListener('change', autoSaveProfile);
+    });
+    
+    // Add activity level change listener
+    const activityInputs = document.querySelectorAll('input[name="activity"]');
+    activityInputs.forEach(input => {
+        input.addEventListener('change', autoSaveProfile);
+    });
+    
+    // Add gender change listener
+    const genderInputs = document.querySelectorAll('input[name="gender"]');
+    genderInputs.forEach(input => {
+        input.addEventListener('change', autoSaveProfile);
     });
     
     console.log('Profile page initialized');
+}
+
+function autoSaveProfile() {
+    // Небольшая задержка, чтобы не сохранять при каждом нажатии клавиши
+    clearTimeout(autoSaveProfile.timeout);
+    autoSaveProfile.timeout = setTimeout(() => {
+        saveProfileData(true); // true = silent save (без уведомления)
+    }, 1000);
 }
 
 function loadProfileData() {
@@ -613,38 +668,7 @@ function loadProfileData() {
     const savedProfile = localStorage.getItem('kbju_profile');
     if (savedProfile) {
         const profile = JSON.parse(savedProfile);
-        
-        // Update input fields
-        const nameInput = document.getElementById('profile-name-input');
-        const ageInput = document.getElementById('profile-age-input');
-        const heightInput = document.getElementById('profile-height-input');
-        const weightInput = document.getElementById('profile-weight-input');
-        const caloriesInput = document.getElementById('profile-calories-input');
-        const proteinInput = document.getElementById('profile-protein-input');
-        const fatsInput = document.getElementById('profile-fats-input');
-        const carbsInput = document.getElementById('profile-carbs-input');
-        
-        if (nameInput) nameInput.value = profile.name || 'Пользователь';
-        if (ageInput) ageInput.value = profile.age || 25;
-        if (heightInput) heightInput.value = profile.height || 170;
-        if (weightInput) weightInput.value = profile.weight || 70;
-        if (caloriesInput) caloriesInput.value = profile.targetCalories || 2200;
-        if (proteinInput) proteinInput.value = profile.targetProtein || 110;
-        if (fatsInput) fatsInput.value = profile.targetFats || 75;
-        if (carbsInput) carbsInput.value = profile.targetCarbs || 275;
-        
-        // Update profile name display
-        const profileNameDisplay = document.getElementById('profile-name');
-        if (profileNameDisplay) {
-            profileNameDisplay.textContent = profile.name || 'Пользователь';
-        }
-        
-        // Set activity level
-        const activityLevel = profile.activityLevel || 'sedentary';
-        const activityInput = document.querySelector(`input[name="activity"][value="${activityLevel}"]`);
-        if (activityInput) {
-            activityInput.checked = true;
-        }
+        updateProfileFormFields(profile);
     }
 }
 
@@ -657,10 +681,11 @@ function updateProfilePreview() {
     }
 }
 
-function saveProfileData() {
+function saveProfileData(silent = false) {
     // Collect form data
     const profileData = {
         name: document.getElementById('profile-name-input')?.value || 'Пользователь',
+        gender: document.querySelector('input[name="gender"]:checked')?.value || 'male',
         age: parseInt(document.getElementById('profile-age-input')?.value) || 25,
         height: parseInt(document.getElementById('profile-height-input')?.value) || 170,
         weight: parseInt(document.getElementById('profile-weight-input')?.value) || 70,
@@ -677,22 +702,24 @@ function saveProfileData() {
     // Update global userProfile
     userProfile = { ...userProfile, ...profileData };
     
-    // Show success message
-    const saveBtn = document.getElementById('profile-save-btn');
-    if (saveBtn) {
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M16.667 5L7.5 14.167L3.333 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Сохранено!
-        `;
-        saveBtn.style.background = '#16a34a';
-        
-        setTimeout(() => {
-            saveBtn.innerHTML = originalText;
-            saveBtn.style.background = '';
-        }, 2000);
+    // Show success message only if not silent
+    if (!silent) {
+        const saveBtn = document.getElementById('profile-save-btn');
+        if (saveBtn) {
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M16.667 5L7.5 14.167L3.333 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Сохранено!
+            `;
+            saveBtn.style.background = '#16a34a';
+            
+            setTimeout(() => {
+                saveBtn.innerHTML = originalText;
+                saveBtn.style.background = '';
+            }, 2000);
+        }
     }
     
     // Update main page stats if we're on main page
@@ -752,7 +779,7 @@ function showAnalysis() {
 function showResults(result) {
     // Update result card
     document.getElementById('food-name').textContent = result.name;
-    document.getElementById('food-portion').textContent = result.portion || 'Порция ~300г';
+    document.getElementById('food-portion').textContent = result.portion ? result.portion : 'Порция: не определено';
     document.getElementById('confidence').textContent = result.confidence || '95%';
     
     resultCard.classList.add('active');
@@ -817,6 +844,18 @@ function addToHistory(food) {
 }
 
 function updateDailyStats() {
+    console.log('updateDailyStats вызвана');
+    console.log('userProfile:', userProfile);
+    
+    // Проверяем, что userProfile содержит необходимые значения
+    if (!userProfile.targetCalories || !userProfile.targetProtein || !userProfile.targetFats || !userProfile.targetCarbs) {
+        console.log('userProfile не содержит целевые значения, используем значения по умолчанию');
+        userProfile.targetCalories = userProfile.targetCalories || 2200;
+        userProfile.targetProtein = userProfile.targetProtein || 110;
+        userProfile.targetFats = userProfile.targetFats || 75;
+        userProfile.targetCarbs = userProfile.targetCarbs || 275;
+    }
+    
     const today = new Date().toDateString();
     const todayMeals = mealHistory.filter(meal => meal.date === today);
     
@@ -825,11 +864,59 @@ function updateDailyStats() {
     const totalFats = todayMeals.reduce((sum, meal) => sum + meal.fats, 0);
     const totalCarbs = todayMeals.reduce((sum, meal) => sum + meal.carbs, 0);
     
-    // Обновляем значения
-    document.getElementById('daily-calories').textContent = totalCalories;
-    document.getElementById('daily-protein').textContent = totalProtein + 'г';
-    document.getElementById('daily-fat').textContent = totalFats + 'г';
-    document.getElementById('daily-carbs').textContent = totalCarbs + 'г';
+    // Обновляем текущие значения
+    const dailyCaloriesEl = document.getElementById('daily-calories');
+    const dailyProteinEl = document.getElementById('daily-protein');
+    const dailyFatEl = document.getElementById('daily-fat');
+    const dailyCarbsEl = document.getElementById('daily-carbs');
+    
+    console.log('Элементы найдены:', {
+        dailyCaloriesEl: !!dailyCaloriesEl,
+        dailyProteinEl: !!dailyProteinEl,
+        dailyFatEl: !!dailyFatEl,
+        dailyCarbsEl: !!dailyCarbsEl
+    });
+    
+    if (dailyCaloriesEl) dailyCaloriesEl.textContent = totalCalories;
+    if (dailyProteinEl) dailyProteinEl.textContent = totalProtein + 'г';
+    if (dailyFatEl) dailyFatEl.textContent = totalFats + 'г';
+    if (dailyCarbsEl) dailyCarbsEl.textContent = totalCarbs + 'г';
+    
+    // Обновляем целевые значения (серые цифры после "/")
+    const statTarget = document.querySelector('.stat-target');
+    console.log('statTarget найден:', !!statTarget);
+    if (statTarget) {
+        statTarget.textContent = '/' + userProfile.targetCalories;
+        console.log('Обновлен statTarget:', statTarget.textContent);
+    }
+    
+    // Обновляем целевые значения для белков, жиров и углеводов
+    if (dailyProteinEl) {
+        const proteinSubtitle = dailyProteinEl.parentElement?.querySelector('.stat-subtitle');
+        console.log('proteinSubtitle найден:', !!proteinSubtitle);
+        if (proteinSubtitle) {
+            proteinSubtitle.textContent = '/' + userProfile.targetProtein + 'г';
+            console.log('Обновлен proteinSubtitle:', proteinSubtitle.textContent);
+        }
+    }
+    
+    if (dailyFatEl) {
+        const fatSubtitle = dailyFatEl.parentElement?.querySelector('.stat-subtitle');
+        console.log('fatSubtitle найден:', !!fatSubtitle);
+        if (fatSubtitle) {
+            fatSubtitle.textContent = '/' + userProfile.targetFats + 'г';
+            console.log('Обновлен fatSubtitle:', fatSubtitle.textContent);
+        }
+    }
+    
+    if (dailyCarbsEl) {
+        const carbsSubtitle = dailyCarbsEl.parentElement?.querySelector('.stat-subtitle');
+        console.log('carbsSubtitle найден:', !!carbsSubtitle);
+        if (carbsSubtitle) {
+            carbsSubtitle.textContent = '/' + userProfile.targetCarbs + 'г';
+            console.log('Обновлен carbsSubtitle:', carbsSubtitle.textContent);
+        }
+    }
     
     // Обновляем круговую диаграмму калорий
     const progress = Math.min((totalCalories / userProfile.targetCalories) * 100, 100);
@@ -888,7 +975,7 @@ function updateFoodList() {
                     <div class="food-icon" style="background: ${getRandomColor()};">${getFoodIcon(meal.name)}</div>
                     <div class="food-info">
                         <h4>${meal.name}</h4>
-                        <p>~300г • ${meal.calories} ккал</p>
+                        <p>${meal.portion ? meal.portion : 'Порция: не определено'} • ${meal.calories} ккал</p>
                     </div>
                     <button class="food-menu" onclick="showFoodMenu(${meal.id})">⋮</button>
                 `;
@@ -912,7 +999,7 @@ function updateFoodList() {
 function showFoodModal(meal) {
     // Обновляем содержимое модального окна
     document.getElementById('modal-food-name').textContent = meal.name;
-    document.getElementById('modal-food-portion').textContent = `Порция: ~300г`;
+    document.getElementById('modal-food-portion').textContent = meal.portion ? meal.portion : 'Порция: не определено';
     document.getElementById('modal-calories').textContent = meal.calories;
     document.getElementById('modal-protein').textContent = meal.protein;
     document.getElementById('modal-fat').textContent = meal.fats;
@@ -996,8 +1083,167 @@ function updateTodayDate() {
 }
 
 function loadProfile() {
+    console.log('loadProfile вызвана');
     const savedProfile = localStorage.getItem('kbju_profile');
+    console.log('Сохраненный профиль из localStorage:', savedProfile);
+    
     if (savedProfile) {
-        userProfile = { ...userProfile, ...JSON.parse(savedProfile) };
+        const profile = JSON.parse(savedProfile);
+        console.log('Распарсенный профиль:', profile);
+        userProfile = { ...userProfile, ...profile };
+        console.log('Обновленный userProfile:', userProfile);
+        
+        // Также обновляем поля формы профиля, если они существуют
+        updateProfileFormFields(profile);
+        
+        // Обновляем отображение на главной странице
+        updateDailyStats();
+    } else {
+        console.log('Сохраненный профиль не найден, используем значения по умолчанию');
+    }
+}
+
+function updateProfileFormFields(profile) {
+    // Обновляем поля формы профиля
+    const nameInput = document.getElementById('profile-name-input');
+    const ageInput = document.getElementById('profile-age-input');
+    const heightInput = document.getElementById('profile-height-input');
+    const weightInput = document.getElementById('profile-weight-input');
+    const caloriesInput = document.getElementById('profile-calories-input');
+    const proteinInput = document.getElementById('profile-protein-input');
+    const fatsInput = document.getElementById('profile-fats-input');
+    const carbsInput = document.getElementById('profile-carbs-input');
+    
+    if (nameInput) nameInput.value = profile.name || 'Пользователь';
+    if (ageInput) ageInput.value = profile.age || 25;
+    if (heightInput) heightInput.value = profile.height || 170;
+    if (weightInput) weightInput.value = profile.weight || 70;
+    if (caloriesInput) caloriesInput.value = profile.targetCalories || 2200;
+    if (proteinInput) proteinInput.value = profile.targetProtein || 110;
+    if (fatsInput) fatsInput.value = profile.targetFats || 75;
+    if (carbsInput) carbsInput.value = profile.targetCarbs || 275;
+    
+    // Обновляем отображение имени в профиле
+    const profileNameDisplay = document.getElementById('profile-name');
+    if (profileNameDisplay) {
+        profileNameDisplay.textContent = profile.name || 'Пользователь';
+    }
+    
+    // Устанавливаем пол
+    const gender = profile.gender || 'male';
+    const genderInput = document.querySelector(`input[name="gender"][value="${gender}"]`);
+    if (genderInput) {
+        genderInput.checked = true;
+    }
+    
+    // Устанавливаем уровень активности
+    const activityLevel = profile.activityLevel || 'sedentary';
+    const activityInput = document.querySelector(`input[name="activity"][value="${activityLevel}"]`);
+    if (activityInput) {
+        activityInput.checked = true;
+    }
+}
+
+// Функция для расчёта базового метаболизма (BMR) по формуле Харриса-Бенедикта
+function calculateBMR(weight, height, age, gender) {
+    // Формула Харриса-Бенедикта
+    if (gender === 'male') {
+        return 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+    } else {
+        return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+    }
+}
+
+// Функция для расчёта общего расхода энергии (TDEE) с учётом активности
+function calculateTDEE(bmr, activityLevel) {
+    const activityMultipliers = {
+        sedentary: 1.2,      // Сидячий образ жизни
+        light: 1.375,        // Легкая активность (1-3 тренировки в неделю)
+        moderate: 1.55,      // Умеренная активность (3-5 тренировок в неделю)
+        high: 1.725,         // Высокая активность (6-7 тренировок в неделю)
+        very_high: 1.9       // Очень высокая активность (физическая работа + тренировки)
+    };
+    
+    return bmr * (activityMultipliers[activityLevel] || 1.2);
+}
+
+// Функция для расчёта макронутриентов на основе калорий
+function calculateMacros(calories) {
+    // Стандартное распределение макронутриентов:
+    // Белки: 20-25% (1.6-2.2г на кг веса)
+    // Жиры: 25-35%
+    // Углеводы: 45-55%
+    
+    const proteinRatio = 0.25; // 25% от калорий
+    const fatRatio = 0.30;     // 30% от калорий
+    const carbsRatio = 0.45;   // 45% от калорий
+    
+    return {
+        calories: Math.round(calories),
+        protein: Math.round((calories * proteinRatio) / 4), // 4 ккал на 1г белка
+        fats: Math.round((calories * fatRatio) / 9),        // 9 ккал на 1г жира
+        carbs: Math.round((calories * carbsRatio) / 4)      // 4 ккал на 1г углеводов
+    };
+}
+
+// Функция для автоматического расчёта КБЖУ на основе данных профиля
+function calculateRecommendedMacros() {
+    const profile = userProfile;
+    
+    // Проверяем, есть ли все необходимые данные
+    if (!profile.weight || !profile.height || !profile.age || !profile.activityLevel) {
+        console.log('Недостаточно данных для расчёта КБЖУ');
+        return null;
+    }
+    
+    // Расчёт базового метаболизма
+    const bmr = calculateBMR(profile.weight, profile.height, profile.age, profile.gender || 'male');
+    
+    // Расчёт общего расхода энергии
+    const tdee = calculateTDEE(bmr, profile.activityLevel);
+    
+    // Расчёт макронутриентов
+    const macros = calculateMacros(tdee);
+    
+    console.log('Расчёт КБЖУ:', {
+        bmr: Math.round(bmr),
+        tdee: Math.round(tdee),
+        macros: macros
+    });
+    
+    return macros;
+}
+
+// Функция для обновления целей питания на основе расчёта
+function updateNutritionGoals() {
+    const recommendedMacros = calculateRecommendedMacros();
+    
+    if (recommendedMacros) {
+        // Обновляем поля в форме профиля
+        const caloriesInput = document.getElementById('profile-calories-input');
+        const proteinInput = document.getElementById('profile-protein-input');
+        const fatsInput = document.getElementById('profile-fats-input');
+        const carbsInput = document.getElementById('profile-carbs-input');
+        
+        if (caloriesInput) caloriesInput.value = recommendedMacros.calories;
+        if (proteinInput) proteinInput.value = recommendedMacros.protein;
+        if (fatsInput) fatsInput.value = recommendedMacros.fats;
+        if (carbsInput) carbsInput.value = recommendedMacros.carbs;
+        
+        // Обновляем глобальный профиль
+        userProfile.targetCalories = recommendedMacros.calories;
+        userProfile.targetProtein = recommendedMacros.protein;
+        userProfile.targetFats = recommendedMacros.fats;
+        userProfile.targetCarbs = recommendedMacros.carbs;
+        
+        // Автоматически сохраняем изменения
+        autoSaveProfile();
+        
+        // Обновляем отображение на главной странице
+        if (currentPage === 'main') {
+            updateDailyStats();
+        }
+        
+        console.log('Цели питания обновлены:', recommendedMacros);
     }
 } 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FoodScan - Анализ питания</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23ea580c'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='white'>🍎</text></svg>">
 </head>
 <body>
     <div class="app-container">
@@ -301,6 +302,19 @@
                             <input type="text" id="profile-name-input" value="Пользователь" class="profile-input">
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Пол</label>
+                            <div class="gender-options">
+                                <label class="gender-option">
+                                    <input type="radio" name="gender" value="male" checked>
+                                    <span class="gender-text">Мужской</span>
+                                </label>
+                                <label class="gender-option">
+                                    <input type="radio" name="gender" value="female">
+                                    <span class="gender-text">Женский</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Возраст</label>
                             <input type="number" id="profile-age-input" value="25" class="profile-input">
                         </div>
@@ -311,29 +325,6 @@
                         <div class="form-group">
                             <label class="form-label">Вес (кг)</label>
                             <input type="number" id="profile-weight-input" value="70" class="profile-input">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Goals Section -->
-                <div class="profile-section">
-                    <h3 class="section-title">Цели питания</h3>
-                    <div class="profile-form">
-                        <div class="form-group">
-                            <label class="form-label">Целевые калории</label>
-                            <input type="number" id="profile-calories-input" value="2200" class="profile-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Белки (г)</label>
-                            <input type="number" id="profile-protein-input" value="110" class="profile-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Жиры (г)</label>
-                            <input type="number" id="profile-fats-input" value="75" class="profile-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Углеводы (г)</label>
-                            <input type="number" id="profile-carbs-input" value="275" class="profile-input">
                         </div>
                     </div>
                 </div>
@@ -370,6 +361,42 @@
                                 <span class="activity-desc">6-7 тренировок в неделю</span>
                             </span>
                         </label>
+                    </div>
+                </div>
+
+                <!-- Auto Calculate Button -->
+                <div class="profile-section">
+                    <div class="auto-calculate-section">
+                        <button type="button" class="auto-calculate-btn" id="auto-calculate-btn">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 2L10 18M2 10L18 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Рассчитать КБЖУ автоматически
+                        </button>
+                        <p class="auto-calculate-desc">На основе возраста, веса, роста и уровня активности</p>
+                    </div>
+                </div>
+                
+                <!-- Goals Section -->
+                <div class="profile-section">
+                    <h3 class="section-title">Цели питания</h3>
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label class="form-label">Целевые калории</label>
+                            <input type="number" id="profile-calories-input" value="2200" class="profile-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Белки (г)</label>
+                            <input type="number" id="profile-protein-input" value="110" class="profile-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Жиры (г)</label>
+                            <input type="number" id="profile-fats-input" value="75" class="profile-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Углеводы (г)</label>
+                            <input type="number" id="profile-carbs-input" value="275" class="profile-input">
+                        </div>
                     </div>
                 </div>
                 
