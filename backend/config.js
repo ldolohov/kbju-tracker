@@ -17,6 +17,7 @@ module.exports = {
     ai: {
         openai: {
             apiKey: process.env.OPENAI_API_KEY,
+            model: process.env.OPENAI_MODEL || 'gpt-5',
         }
     },
     // другие конфигурации могут быть добавлены здесь

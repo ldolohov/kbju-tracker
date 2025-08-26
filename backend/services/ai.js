@@ -8,7 +8,7 @@ const openai = new OpenAI({
 async function analyzeFood(imageBase64) {
     try {
         const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: config.ai.openai.model,
             messages: [
                 {
                     role: "user",

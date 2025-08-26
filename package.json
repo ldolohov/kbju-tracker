@@ -10,7 +10,8 @@
     "postinstall": "npm install --prefix backend",
     "dev:switch": "git checkout develop && npm run dev",
     "prod:switch": "git checkout main && npm start",
-    "deploy": "git checkout main && git merge develop && git push origin main"
+    "deploy": "git checkout main && git merge develop && git push origin main",
+    "check-config": "node backend/check-config.js"
   },
   "keywords": ["nutrition", "tracker", "ai", "food"],
   "author": "",

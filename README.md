@@ -33,6 +33,7 @@
 
 **Environment Variables:**
 - `OPENAI_API_KEY` = ваш_ключ_openai
+- `OPENAI_MODEL` = gpt-5
 - `NODE_ENV` = production
 - `PORT` = 10000 (Render автоматически установит правильный порт)
 
