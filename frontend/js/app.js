@@ -731,8 +731,23 @@ function saveProfileData(silent = false) {
 }
 
 function handleFile(file) {
-    if (!file.type.startsWith('image/')) return;
+    console.log('handleFile: Начинаю обработку файла:', file.name);
+    
+    if (!file.type.startsWith('image/')) {
+        console.log('handleFile: Файл не является изображением');
+        return;
+    }
 
+    // Проверяем аутентификацию перед анализом
+    console.log('handleFile: Проверяю аутентификацию...');
+    if (!authService.isUserAuthenticated()) {
+        console.log('handleFile: Пользователь не аутентифицирован, показываю модальное окно');
+        // Показываем модальное окно аутентификации
+        authService.showAuthModal();
+        return;
+    }
+
+    console.log('handleFile: Пользователь аутентифицирован, продолжаю обработку');
     const reader = new FileReader();
     reader.onload = (e) => {
         photoPreview.src = e.target.result;
