@@ -1,4 +1,12 @@
 require('dotenv').config();
+const environments = require('./config/environments');
+
+// Определяем текущую среду
+const currentEnv = process.env.NODE_ENV || 'development';
+const envConfig = environments[currentEnv];
+
+console.log(`🌍 Загружена конфигурация для среды: ${currentEnv}`);
+
 module.exports = {
     database: {
         user: 'kbju_user',
@@ -9,7 +17,7 @@ module.exports = {
     },
     server: {
         cors: {
-            origin: process.env.CORS_ORIGIN || '*',
+            origin: envConfig.cors.origin,
             credentials: true
         },
         port: process.env.PORT || 3000,
@@ -19,5 +27,13 @@ module.exports = {
             apiKey: process.env.OPENAI_API_KEY,
         }
     },
-    // другие конфигурации могут быть добавлены здесь
+    google: {
+        callbackURL: envConfig.google.callbackURL
+    },
+    session: {
+        secure: envConfig.session.secure,
+        sameSite: envConfig.session.sameSite
+    },
+    logging: envConfig.logging,
+    environment: currentEnv
 }; 

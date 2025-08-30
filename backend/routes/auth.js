@@ -8,12 +8,24 @@ router.get('/google',
 );
 
 // Callback после успешной аутентификации
-router.get('/google/callback',
+router.get('/google/callback', (req, res, next) => {
+    console.log('🔐 Google OAuth Callback: Получен callback');
+    console.log('🔐 Query params:', req.query);
+    console.log('🔐 Session ID:', req.sessionID);
+    console.log('🔐 User agent:', req.headers['user-agent']);
+    
+    // Проверяем наличие ошибки от Google
+    if (req.query.error) {
+        console.error('🔐 Google OAuth Error:', req.query.error);
+        console.error('🔐 Error description:', req.query.error_description);
+        return res.redirect('/?error=auth_failed&reason=' + encodeURIComponent(req.query.error_description || req.query.error));
+    }
+    
     passport.authenticate('google', { 
-        failureRedirect: '/login',
-        successRedirect: '/dashboard'
-    })
-);
+        failureRedirect: '/?error=auth_failed',
+        successRedirect: '/?success=auth_success'
+    })(req, res, next);
+});
 
 // Выход из системы
 router.get('/logout', (req, res) => {

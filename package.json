@@ -4,13 +4,16 @@
   "description": "Трекер питания с AI анализом фото",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
-    "build": "echo 'Build completed'",
-    "postinstall": "npm install --prefix backend",
-    "dev:switch": "git checkout develop && npm run dev",
-    "prod:switch": "git checkout main && npm start",
-    "deploy": "git checkout main && git merge develop && git push origin main"
+    "start": "cd backend && node server.js",
+    "dev": "cd backend && nodemon server.js",
+    "test-prod": "cd backend && node scripts/test-prod-config.js",
+    "check-env": "cd backend && node check-env.js",
+    "switch-env": "cd backend && node scripts/switch-env.js",
+    "test-oauth": "cd backend && node scripts/test-oauth.js",
+    "generate-secret": "cd backend && node scripts/generate-secret.js",
+    "build": "echo 'No build step required'",
+    "deploy:staging": "echo 'Deploy to staging environment'",
+    "deploy:prod": "echo 'Deploy to production environment'"
   },
   "keywords": ["nutrition", "tracker", "ai", "food"],
   "author": "",

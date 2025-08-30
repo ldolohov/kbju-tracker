@@ -29,9 +29,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: isProduction,
+        secure: false, // Временно отключаем для локального тестирования
         maxAge: 24 * 60 * 60 * 1000, // 24 часа
-        sameSite: isProduction ? 'none' : 'lax'
+        sameSite: 'lax' // Временно используем lax для локального тестирования
     }
 }));
 

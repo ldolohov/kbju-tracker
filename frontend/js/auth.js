@@ -11,10 +11,43 @@ class AuthService {
 
     async init() {
         console.log('AuthService: Инициализация...');
+        
+        // Проверяем параметры URL на наличие ошибок аутентификации
+        this.checkUrlParams();
+        
         // Проверяем статус аутентификации при загрузке
         await this.checkAuthStatus();
         this.setupEventListeners();
         console.log('AuthService: Инициализация завершена');
+    }
+
+    // Проверяем параметры URL на наличие ошибок
+    checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const reason = urlParams.get('reason');
+        const success = urlParams.get('success');
+        
+        if (error === 'auth_failed') {
+            console.error('🔐 AuthService: Ошибка аутентификации:', reason || 'Неизвестная ошибка');
+            this.showError(`Ошибка входа: ${reason || 'Не удалось войти в систему'}`);
+            
+            // Очищаем URL от параметров ошибки
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        if (success === 'auth_success') {
+            console.log('🔐 AuthService: Успешная аутентификация');
+            this.showSuccess('Успешный вход в систему!');
+            
+            // Очищаем URL от параметров успеха
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Перезагружаем статус аутентификации
+            setTimeout(() => {
+                this.checkAuthStatus();
+            }, 1000);
+        }
     }
 
     setupEventListeners() {
@@ -289,10 +322,20 @@ class AuthService {
 
     async login() {
         try {
+            console.log('🔐 AuthService: Начинаю процесс входа через Google');
+            
+            // Проверяем текущий URL
+            const currentUrl = window.location.href;
+            console.log('🔐 AuthService: Текущий URL:', currentUrl);
+            
             // Перенаправляем на Google OAuth
-            window.location.href = '/auth/google';
+            const authUrl = '/auth/google';
+            console.log('🔐 AuthService: Перенаправляю на:', authUrl);
+            
+            // Используем window.location.replace для более надежного перенаправления
+            window.location.replace(authUrl);
         } catch (error) {
-            console.error('Ошибка входа:', error);
+            console.error('🔐 AuthService: Ошибка входа:', error);
             this.showError('Ошибка входа в систему');
         }
     }
