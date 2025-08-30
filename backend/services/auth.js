@@ -21,6 +21,8 @@ if (!hasGoogleOAuth) {
                         : 'http://localhost:3000/auth/google/callback');
     
     console.log('Google OAuth callback URL:', callbackURL);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('GOOGLE_CALLBACK_URL from env:', process.env.GOOGLE_CALLBACK_URL);
     
     // Добавляем scope для Google OAuth
     passport.use(new GoogleStrategy({
