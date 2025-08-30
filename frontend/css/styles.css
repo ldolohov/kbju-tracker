@@ -100,6 +100,53 @@ body {
     border-radius: 50%;
 }
 
+/* Аватар пользователя в sidebar */
+.sidebar-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+/* Аватар пользователя на странице профиля */
+.profile-user-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+}
+
+/* Кнопка выхода в профиле */
+.logout-profile-btn {
+    width: 100%;
+    padding: 16px;
+    background: #dc2626;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 3px !important;
+}
+
+.logout-profile-btn:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+}
+
+.logout-profile-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* Модальное окно профиля */
 .profile-modal {
     position: fixed;
@@ -205,8 +252,7 @@ body {
 }
 
 .profile-actions {
-    border-top: 1px solid var(--border);
-    padding-top: 24px;
+    padding-top: 3px;
 }
 
 .logout-btn {
@@ -1677,9 +1723,8 @@ body {
 
 /* Profile Actions */
 .profile-actions {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
+    margin-top: 4px;
+    padding-top: 3px;
 }
 
 .profile-actions .save-btn {

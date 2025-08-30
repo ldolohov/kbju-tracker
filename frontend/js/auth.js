@@ -40,7 +40,26 @@ class AuthService {
             });
         }
         
-
+        // Кнопка выхода из системы в профиле
+        const profileLogoutBtn = document.getElementById('profile-logout-btn');
+        console.log('AuthService: Кнопка выхода в профиле найдена:', profileLogoutBtn);
+        if (profileLogoutBtn) {
+            profileLogoutBtn.addEventListener('click', () => {
+                console.log('AuthService: Кнопка выхода в профиле нажата');
+                this.logout();
+            });
+        }
+        
+        // Обработчик для перехода на страницу профиля
+        const profileLink = document.getElementById('profile-link');
+        console.log('AuthService: Ссылка на профиль найдена:', profileLink);
+        if (profileLink) {
+            profileLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('AuthService: Переход на страницу профиля');
+                this.showProfilePage();
+            });
+        }
         
         console.log('AuthService: Обработчики событий настроены');
     }
@@ -289,6 +308,10 @@ class AuthService {
                 this.currentUser = null;
                 this.isAuthenticated = false;
                 this.showSuccess('Вы успешно вышли из системы');
+                
+                // Обновляем UI после выхода
+                this.updateSidebarUI();
+                this.updateProfilePageUI();
             } else {
                 throw new Error('Ошибка выхода');
             }
@@ -325,7 +348,9 @@ class AuthService {
             this.isAuthenticated = false;
         }
         
-
+        // Обновляем UI после проверки статуса
+        this.updateSidebarUI();
+        this.updateProfilePageUI();
     }
 
     async showProfile() {
@@ -440,7 +465,103 @@ class AuthService {
         return true;
     }
     
-
+    // Обновить UI в sidebar
+    updateSidebarUI() {
+        const sidebarUserAvatar = document.getElementById('sidebar-user-avatar');
+        const profileDefaultIcon = document.getElementById('profile-default-icon');
+        
+        if (this.isAuthenticated && this.currentUser && sidebarUserAvatar && profileDefaultIcon) {
+            // Показываем Google аватар
+            sidebarUserAvatar.src = this.currentUser.picture;
+            sidebarUserAvatar.alt = this.currentUser.name;
+            sidebarUserAvatar.style.display = 'block';
+            profileDefaultIcon.style.display = 'none';
+            console.log('AuthService: Обновлен sidebar - показан Google аватар');
+        } else if (sidebarUserAvatar && profileDefaultIcon) {
+            // Показываем стандартную иконку
+            sidebarUserAvatar.style.display = 'none';
+            profileDefaultIcon.style.display = 'block';
+            console.log('AuthService: Обновлен sidebar - показана стандартная иконка');
+        }
+    }
+    
+    // Обновить UI на странице профиля
+    updateProfilePageUI() {
+        const profileUserAvatar = document.getElementById('profile-user-avatar');
+        const profileAvatarIcon = document.getElementById('profile-avatar-icon');
+        const profileName = document.getElementById('profile-name');
+        const profileSubtitle = document.getElementById('profile-subtitle');
+        const logoutSection = document.getElementById('logout-section');
+        
+        if (this.isAuthenticated && this.currentUser) {
+            // Показываем Google аватар и информацию
+            if (profileUserAvatar && profileAvatarIcon) {
+                profileUserAvatar.src = this.currentUser.picture;
+                profileUserAvatar.alt = this.currentUser.name;
+                profileUserAvatar.style.display = 'block';
+                profileAvatarIcon.style.display = 'none';
+            }
+            
+            if (profileName) {
+                profileName.textContent = this.currentUser.name;
+            }
+            
+            if (profileSubtitle) {
+                profileSubtitle.textContent = `Google аккаунт: ${this.currentUser.email}`;
+            }
+            
+            if (logoutSection) {
+                logoutSection.style.display = 'block';
+            }
+            console.log('AuthService: Обновлена страница профиля - показан Google профиль');
+        } else {
+            // Показываем стандартную информацию
+            if (profileUserAvatar && profileAvatarIcon) {
+                profileUserAvatar.style.display = 'none';
+                profileAvatarIcon.style.display = 'block';
+            }
+            
+            if (profileName) {
+                profileName.textContent = 'Пользователь';
+            }
+            
+            if (profileSubtitle) {
+                profileSubtitle.textContent = 'Управление профиль и целями';
+            }
+            
+            if (logoutSection) {
+                logoutSection.style.display = 'none';
+            }
+            console.log('AuthService: Обновлена страница профиля - показан стандартный профиль');
+        }
+    }
+    
+    // Показать страницу профиля
+    showProfilePage() {
+        // Скрываем все страницы
+        const pages = ['main-page', 'history-page', 'profile-page'];
+        pages.forEach(pageId => {
+            const page = document.getElementById(pageId);
+            if (page) {
+                page.style.display = 'none';
+            }
+        });
+        
+        // Показываем страницу профиля
+        const profilePage = document.getElementById('profile-page');
+        if (profilePage) {
+            profilePage.style.display = 'block';
+        }
+        
+        // Скрываем sidebar
+        const sideMenu = document.getElementById('side-menu');
+        if (sideMenu) {
+            sideMenu.classList.remove('active');
+        }
+        
+        // Обновляем UI профиля
+        this.updateProfilePageUI();
+    }
 }
 
 // Создаем глобальный экземпляр

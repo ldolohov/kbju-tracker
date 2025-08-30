@@ -187,18 +187,25 @@
                 </button>
             </div>
             <div class="menu-items">
+                <!-- Профиль (первый, с Google аватаром для аутентифицированных) -->
+                <a href="#" class="menu-item" id="profile-link">
+                    <div class="menu-item-icon" id="profile-menu-icon">
+                        <img id="sidebar-user-avatar" class="sidebar-user-avatar" src="" alt="Профиль" style="display: none;">
+                        <span id="profile-default-icon">👤</span>
+                    </div>
+                    <span>Профиль</span>
+                </a>
+                
                 <a href="#" class="menu-item" id="history-link">
                     <div class="menu-item-icon">📊</div>
                     <span>История</span>
                 </a>
+                
                 <a href="#" class="menu-item">
                     <div class="menu-item-icon">🎯</div>
                     <span>Цели</span>
                 </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-item-icon">👤</div>
-                    <span>Профиль</span>
-                </a>
+                
                 <a href="#" class="menu-item">
                     <div class="menu-item-icon">⚙️</div>
                     <span>Настройки</span>
@@ -287,10 +294,11 @@
                 <!-- Profile Avatar Section -->
                 <div class="profile-avatar-section">
                     <div class="profile-avatar">
-                        <div class="avatar-icon">👤</div>
+                        <img id="profile-user-avatar" class="profile-user-avatar" src="" alt="Аватар пользователя" style="display: none;">
+                        <div class="avatar-icon" id="profile-avatar-icon">👤</div>
                     </div>
                     <h3 class="profile-name" id="profile-name">Пользователь</h3>
-                    <p class="profile-subtitle">Управление профилем и целями</p>
+                    <p class="profile-subtitle" id="profile-subtitle">Управление профилем и целями</p>
                 </div>
 
                 <!-- Personal Info Section -->
@@ -407,6 +415,17 @@
                             <path d="M16.667 5L7.5 14.167L3.333 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         Сохранить изменения
+                    </button>
+                </div>
+                
+                <!-- Logout Button (только для аутентифицированных) -->
+                <div class="profile-actions" id="logout-section" style="display: none;">
+                    <button class="logout-profile-btn" id="profile-logout-btn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M6 12L2 8L6 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 8H14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Выйти из системы
                     </button>
                 </div>
             </div>
