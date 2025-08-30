@@ -6,7 +6,7 @@ const session = require('express-session');
 const config = require('./config');
 
 // Импортируем аутентификацию
-const { passport } = require('./services/auth');
+const { passport, hasGoogleOAuth } = require('./services/auth');
 
 const app = express();
 
@@ -43,7 +43,8 @@ app.get('/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
-        authenticated: req.isAuthenticated()
+        authenticated: req.isAuthenticated(),
+        authDisabled: !hasGoogleOAuth
     });
 });
 
@@ -56,5 +57,10 @@ const PORT = process.env.PORT || config.server.port;
 app.listen(PORT, () => {
     console.log(`Сервер запущен на порту ${PORT}`);
     console.log(`Окружение: ${process.env.NODE_ENV || 'development'}`);
-    console.log('Google OAuth настроен');
+    
+    if (hasGoogleOAuth) {
+        console.log('✅ Google OAuth настроен');
+    } else {
+        console.log('⚠️  Google OAuth не настроен - аутентификация отключена');
+    }
 });

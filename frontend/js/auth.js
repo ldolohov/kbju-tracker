@@ -344,8 +344,31 @@ class AuthService {
             }
         } catch (error) {
             console.error('Ошибка проверки статуса:', error);
-            this.currentUser = null;
-            this.isAuthenticated = false;
+            
+            // Проверяем, может ли сервер работать без аутентификации
+            try {
+                const healthResponse = await fetch('/health');
+                const healthData = await healthResponse.json();
+                
+                if (healthData.authDisabled) {
+                    console.log('AuthService: Аутентификация отключена на сервере');
+                    this.currentUser = {
+                        id: 'demo-user',
+                        name: 'Demo User',
+                        email: 'demo@example.com',
+                        picture: null
+                    };
+                    this.isAuthenticated = true;
+                    this._showModalAgain = false;
+                } else {
+                    this.currentUser = null;
+                    this.isAuthenticated = false;
+                }
+            } catch (healthError) {
+                console.log('AuthService: Не удалось проверить статус сервера, считаем неаутентифицированным');
+                this.currentUser = null;
+                this.isAuthenticated = false;
+            }
         }
         
         // Обновляем UI после проверки статуса
