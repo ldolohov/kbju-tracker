@@ -677,6 +677,92 @@ body {
 .result-info p {
     color: var(--text-muted);
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+}
+
+.weight-value {
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    user-select: none;
+    min-width: 30px;
+    text-align: center;
+}
+
+.weight-value:hover {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.weight-value:hover::after {
+    content: "Нажмите для изменения";
+    position: absolute;
+    background: var(--text);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-top: 25px;
+    margin-left: -20px;
+    opacity: 0;
+    animation: fadeIn 0.2s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.weight-value.editing {
+    background: var(--surface);
+    color: var(--text);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    transform: scale(1.05);
+}
+
+.edit-weight-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.edit-weight-btn:hover {
+    opacity: 1;
+    color: var(--accent);
+    background: var(--surface);
+}
+
+.weight-input {
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 2px 6px;
+    width: 60px;
+    text-align: center;
+    outline: none;
+}
+
+.weight-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2);
 }
 
 .confidence-badge {

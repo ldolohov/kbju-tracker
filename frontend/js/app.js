@@ -38,6 +38,9 @@ let currentStats = JSON.parse(localStorage.getItem('kbju_stats')) || {
     carbs: 0
 };
 
+// Текущие данные о продукте для редактирования веса
+let currentFoodData = null;
+
 // Sidebar elements
 let sidebar, sidebarToggle, sidebarOverlay;
 
@@ -68,6 +71,8 @@ const mealTime = document.getElementById('meal-time');
 const saveSection = document.getElementById('save-section');
 const retakeBtn = document.getElementById('retake-btn');
 const saveBtn = document.getElementById('save-btn');
+const weightValue = document.getElementById('weight-value');
+const editWeightBtn = document.getElementById('edit-weight-btn');
 
 // Modal elements
 const foodModal = document.getElementById('food-modal');
@@ -172,6 +177,10 @@ function initializeApp() {
         reset();
     });
 
+    // Weight editing
+    weightValue.addEventListener('click', startWeightEdit);
+    editWeightBtn.addEventListener('click', startWeightEdit);
+    
     // Save to diary
     saveBtn.addEventListener('click', function() {
         this.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 10L8 13L15 6" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Сохранено!';
@@ -196,18 +205,37 @@ function initializeApp() {
             return;
         }
         
+        console.log('Сохранение: currentFoodData:', currentFoodData);
+        console.log('Сохранение: DOM значения:', {
+            calories: calories.textContent,
+            protein: protein.textContent,
+            fat: fat.textContent,
+            carbs: carbs.textContent
+        });
+        
+        // Используем данные из currentFoodData, если они есть, иначе из DOM
         const foodData = {
             name: foodName.textContent,
-            portion: portion ? portion.textContent : '',
-            calories: parseInt(calories.textContent),
-            protein: parseFloat(protein.textContent),
-            fats: parseFloat(fat.textContent),
-            carbs: parseFloat(carbs.textContent),
+            portion: `Порция: ${weightValue.textContent}г`,
+            calories: currentFoodData && currentFoodData.currentCalories ? 
+                     currentFoodData.currentCalories : 
+                     parseInt(calories.textContent),
+            protein: currentFoodData && currentFoodData.currentProtein ? 
+                    currentFoodData.currentProtein : 
+                    parseFloat(protein.textContent),
+            fats: currentFoodData && currentFoodData.currentFats ? 
+                  currentFoodData.currentFats : 
+                  parseFloat(fat.textContent),
+            carbs: currentFoodData && currentFoodData.currentCarbs ? 
+                   currentFoodData.currentCarbs : 
+                   parseFloat(carbs.textContent),
             type: selectedMeal.dataset.meal,
             time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
             date: new Date().toDateString(),
             id: Date.now()
         };
+        
+        console.log('Сохранение: итоговые данные для сохранения:', foodData);
         
         addToHistory(foodData);
         
@@ -794,7 +822,11 @@ function showAnalysis() {
 function showResults(result) {
     // Update result card
     document.getElementById('food-name').textContent = result.name;
-    document.getElementById('food-portion').textContent = result.portion ? result.portion : 'Порция: не определено';
+    
+    // Обновляем отображение веса
+    const weight = extractWeightFromPortion(result.portion);
+    weightValue.textContent = weight;
+    
     document.getElementById('confidence').textContent = result.confidence || '95%';
     
     resultCard.classList.add('active');
@@ -807,6 +839,25 @@ function showResults(result) {
     animateValue('protein', 0, result.protein, 800);
     animateValue('fat', 0, result.fats, 800);
     animateValue('carbs', 0, result.carbs, 800);
+    
+    // Сохраняем исходные данные о продукте для пересчета КБЖУ
+    const extractedWeight = extractWeightFromPortion(result.portion);
+    currentFoodData = {
+        name: result.name,
+        baseCalories: result.calories,
+        baseProtein: result.protein,
+        baseFats: result.fats,
+        baseCarbs: result.carbs,
+        baseWeight: extractedWeight,
+        // Инициализируем текущие значения как базовые
+        currentCalories: result.calories,
+        currentProtein: result.protein,
+        currentFats: result.fats,
+        currentCarbs: result.carbs,
+        currentWeight: extractedWeight
+    };
+    
+    console.log('showResults: currentFoodData инициализирован:', currentFoodData);
 }
 
 function animateValue(elementId, start, end, duration) {
@@ -832,6 +883,162 @@ function animateValue(elementId, start, end, duration) {
     requestAnimationFrame(update);
 }
 
+// Функция для извлечения веса из строки порции
+function extractWeightFromPortion(portion) {
+    if (!portion) return 100; // Значение по умолчанию
+    
+    console.log('extractWeightFromPortion вызвана с:', portion);
+    
+    const weightMatch = portion.match(/(\d+(?:\.\d+)?)\s*г/);
+    if (weightMatch) {
+        const weight = parseFloat(weightMatch[1]);
+        console.log('Найден вес в граммах:', weight);
+        return weight;
+    }
+    
+    // Если не найден вес в граммах, пробуем другие единицы
+    const ozMatch = portion.match(/(\d+(?:\.\d+)?)\s*oz/);
+    if (ozMatch) {
+        const weight = parseFloat(ozMatch[1]) * 28.35; // Конвертируем в граммы
+        console.log('Найден вес в унциях, конвертирован в граммы:', weight);
+        return weight;
+    }
+    
+    // Пробуем найти любые цифры в строке
+    const anyNumberMatch = portion.match(/(\d+(?:\.\d+)?)/);
+    if (anyNumberMatch) {
+        const weight = parseFloat(anyNumberMatch[1]);
+        console.log('Найдены любые цифры, используем как вес:', weight);
+        return weight;
+    }
+    
+    console.log('Вес не найден, используем значение по умолчанию: 100');
+    return 100; // Значение по умолчанию
+}
+
+// Функция для начала редактирования веса
+function startWeightEdit() {
+    if (!currentFoodData) return;
+    
+    const currentWeight = currentFoodData.baseWeight;
+    
+    console.log('startWeightEdit вызвана:', {
+        currentWeight: currentWeight,
+        currentFoodData: currentFoodData
+    });
+    
+    // Создаем input для редактирования
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'weight-input';
+    input.value = currentWeight;
+    input.min = '1';
+    input.max = '10000';
+    input.step = '1';
+    
+    // Заменяем текст на input
+    weightValue.textContent = '';
+    weightValue.appendChild(input);
+    weightValue.classList.add('editing');
+    
+    // Фокусируемся на input
+    input.focus();
+    input.select();
+    
+    // Обработчики событий для input
+    input.addEventListener('blur', () => finishWeightEdit(input.value));
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            finishWeightEdit(input.value);
+        } else if (e.key === 'Escape') {
+            cancelWeightEdit();
+        }
+    });
+}
+
+// Функция для завершения редактирования веса
+function finishWeightEdit(newWeight) {
+    if (!currentFoodData) return;
+    
+    const weight = parseFloat(newWeight) || currentFoodData.baseWeight;
+    
+    console.log('finishWeightEdit вызвана:', {
+        newWeight: newWeight,
+        parsedWeight: weight,
+        currentFoodData: currentFoodData
+    });
+    
+    // Пересчитываем КБЖУ на основе нового веса
+    recalculateNutrition(weight);
+    
+    // Восстанавливаем отображение веса
+    weightValue.textContent = weight;
+    weightValue.classList.remove('editing');
+}
+
+// Функция для отмены редактирования веса
+function cancelWeightEdit() {
+    if (!currentFoodData) return;
+    
+    // Восстанавливаем исходный вес
+    weightValue.textContent = currentFoodData.baseWeight;
+    weightValue.classList.remove('editing');
+}
+
+// Функция для пересчета КБЖУ на основе нового веса
+function recalculateNutrition(newWeight) {
+    if (!currentFoodData || !currentFoodData.baseWeight || currentFoodData.baseWeight <= 0) return;
+    
+    const ratio = newWeight / currentFoodData.baseWeight;
+    
+    const newCalories = Math.round(currentFoodData.baseCalories * ratio);
+    const newProtein = parseFloat((currentFoodData.baseProtein * ratio).toFixed(1));
+    const newFats = parseFloat((currentFoodData.baseFats * ratio).toFixed(1));
+    const newCarbs = parseFloat((currentFoodData.baseCarbs * ratio).toFixed(1));
+    
+    console.log('Пересчет КБЖУ:', {
+        oldWeight: currentFoodData.baseWeight,
+        newWeight: newWeight,
+        ratio: ratio,
+        oldCalories: currentFoodData.baseCalories,
+        newCalories: newCalories,
+        oldProtein: currentFoodData.baseProtein,
+        newProtein: newProtein
+    });
+    
+    // Обновляем отображение КБЖУ с анимацией
+    animateValue('calories', parseInt(document.getElementById('calories').textContent), newCalories, 400);
+    animateValue('protein', parseFloat(document.getElementById('protein').textContent), newProtein, 400);
+    animateValue('fat', parseFloat(document.getElementById('fat').textContent), newFats, 400);
+    animateValue('carbs', parseFloat(document.getElementById('carbs').textContent), newCarbs, 400);
+    
+    // Обновляем данные о продукте для корректного сохранения
+    updateCurrentFoodData(newWeight);
+}
+
+// Функция для обновления данных о продукте после изменения веса
+function updateCurrentFoodData(newWeight) {
+    if (!currentFoodData) return;
+    
+    const ratio = newWeight / currentFoodData.baseWeight;
+    
+    // Обновляем данные о продукте для корректного сохранения
+    currentFoodData.currentCalories = Math.round(currentFoodData.baseCalories * ratio);
+    currentFoodData.currentProtein = parseFloat((currentFoodData.baseProtein * ratio).toFixed(1));
+    currentFoodData.currentFats = parseFloat((currentFoodData.baseFats * ratio).toFixed(1));
+    currentFoodData.currentCarbs = parseFloat((currentFoodData.baseCarbs * ratio).toFixed(1));
+    currentFoodData.currentWeight = newWeight;
+    
+    console.log('updateCurrentFoodData: данные обновлены:', {
+        newWeight: newWeight,
+        ratio: ratio,
+        currentCalories: currentFoodData.currentCalories,
+        currentProtein: currentFoodData.currentProtein,
+        currentFats: currentFoodData.currentFats,
+        currentCarbs: currentFoodData.currentCarbs
+    });
+}
+
 function getSelectedMealType() {
     return document.querySelector('.meal-pill.active').dataset.meal;
 }
@@ -846,6 +1053,15 @@ function reset() {
     saveBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L10 18M2 10L18 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg> Сохранить в дневник';
     saveBtn.style.background = '';
     fileInput.value = '';
+    
+    // Очищаем данные о текущем продукте
+    currentFoodData = null;
+    
+    // Восстанавливаем отображение веса
+    if (weightValue) {
+        weightValue.textContent = '-';
+        weightValue.classList.remove('editing');
+    }
 }
 
 function addToHistory(food) {
