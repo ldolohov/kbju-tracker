@@ -16,13 +16,22 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Настройка сессий
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction) {
+    console.warn('⚠️  ВНИМАНИЕ: Используется MemoryStore для сессий в продакшн!');
+    console.warn('   Это может вызвать проблемы с памятью и масштабированием.');
+    console.warn('   Рекомендуется настроить Redis или другое хранилище сессий.');
+}
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 часа
+        secure: isProduction,
+        maxAge: 24 * 60 * 60 * 1000, // 24 часа
+        sameSite: isProduction ? 'none' : 'lax'
     }
 }));
 

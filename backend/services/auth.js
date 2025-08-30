@@ -15,10 +15,19 @@ if (!hasGoogleOAuth) {
     const GoogleStrategy = require('passport-google-oauth20').Strategy;
     
     // Настройка Google OAuth стратегии
+    const callbackURL = process.env.GOOGLE_CALLBACK_URL || 
+                       (process.env.NODE_ENV === 'production' 
+                        ? 'https://kbju-tracker.onrender.com/auth/google/callback'
+                        : 'http://localhost:3000/auth/google/callback');
+    
+    console.log('Google OAuth callback URL:', callbackURL);
+    
+    // Добавляем scope для Google OAuth
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/auth/google/callback"
+        callbackURL: callbackURL,
+        scope: ['profile', 'email'] // Добавляем необходимые scope
     }, async (accessToken, refreshToken, profile, done) => {
         try {
             // Создаем или обновляем пользователя
