@@ -12,6 +12,7 @@
     "test-oauth": "cd backend && node scripts/test-oauth.js",
     "generate-secret": "cd backend && node scripts/generate-secret.js",
     "build": "echo 'No build step required'",
+    "postinstall": "cd backend && npm install",
     "deploy:staging": "echo 'Deploy to staging environment'",
     "deploy:prod": "echo 'Deploy to production environment'"
   },
@@ -27,7 +28,11 @@
     "sharp": "^0.34.2",
     "axios": "^1.10.0",
     "helmet": "^8.1.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "express-session": "^1.18.2",
+    "mongoose": "^8.16.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
